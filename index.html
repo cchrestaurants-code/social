@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Analytics — CCH & Cloud Café</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --bg4: #222222;
+    --crimson: #8B1A1A;
+    --crimson-light: #C0392B;
+    --crimson-bright: #E74C3C;
+    --gold: #D4AF37;
+    --green: #2D5A27;
+    --green-light: #4CAF50;
+    --white: #F5F5F0;
+    --muted: #888880;
+    --border: #2a2a2a;
+    --border2: #333333;
+    --text: #F0EDE8;
+    --text2: #A0998F;
+    --insta: #E1306C;
+    --tiktok: #69C9D0;
+    --facebook: #1877F2;
+    --font: 'Poppins', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .light-theme {
+    --bg: #F4F1EC;
+    --bg2: #FFFFFF;
+    --bg3: #EEEBE4;
+    --bg4: #E5E0D8;
+    --border: #D8D3CA;
+    --border2: #C8C3BA;
+    --text: #1A1714;
+    --text2: #6B6560;
+    --shadow: 0 4px 24px rgba(0,0,0,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+  /* SIDEBAR */
+  #sidebar {
+    position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 100; transition: background 0.3s;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo .brand { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--crimson-bright); text-transform: uppercase; }
+  .sidebar-logo .sub { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+  .credits-badge {
+    margin: 12px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .credits-badge .label { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .credits-badge .amount { font-size: 20px; font-weight: 600; color: var(--gold); }
+  .credits-badge .sub-info { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .credits-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; }
+  .credits-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.5s; }
+  nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+  .nav-section { padding: 16px 16px 4px; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text2);
+    transition: all 0.2s; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--bg3); color: var(--text); border-left-color: var(--crimson-bright); }
+  .nav-icon { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+  .nav-icon.ig { background: rgba(225,48,108,0.2); color: var(--insta); }
+  .nav-icon.tt { background: rgba(105,201,208,0.2); color: var(--tiktok); }
+  .nav-icon.fb { background: rgba(24,119,242,0.2); color: var(--facebook); }
+  .nav-icon.dash { background: rgba(139,26,26,0.25); color: var(--crimson-bright); }
+  .nav-icon.set { background: rgba(212,175,55,0.2); color: var(--gold); }
+  .nav-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+  .sidebar-bottom { padding: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+
+  /* MAIN */
+  #main { margin-left: 240px; min-height: 100vh; }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.3s;
+  }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    padding: 8px 16px; border-radius: var(--radius-sm); font-family: var(--font);
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text); letter-spacing: 0.3px;
+  }
+  .btn:hover { background: var(--bg4); }
+  .btn-crimson { background: var(--crimson); border-color: var(--crimson-light); color: #fff; }
+  .btn-crimson:hover { background: var(--crimson-light); }
+  .btn-gold { background: rgba(212,175,55,0.15); border-color: var(--gold); color: var(--gold); }
+  .btn-gold:hover { background: rgba(212,175,55,0.25); }
+  .btn-green { background: rgba(76,175,80,0.15); border-color: var(--green-light); color: var(--green-light); }
+  .btn-green:hover { background: rgba(76,175,80,0.25); }
+
+  /* PAGE CONTENT */
+  .page { display: none; padding: 32px; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; transition: background 0.3s;
+  }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .card-value { font-size: 28px; font-weight: 700; color: var(--text); }
+  .card-delta { font-size: 12px; margin-top: 4px; }
+  .delta-up { color: var(--green-light); }
+  .delta-down { color: var(--crimson-bright); }
+
+  /* GRIDS */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+  /* PLATFORM TABS */
+  .platform-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .ptab {
+    padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2);
+    transition: all 0.2s;
+  }
+  .ptab:hover { color: var(--text); background: var(--bg4); }
+  .ptab.active-ig { background: rgba(225,48,108,0.15); border-color: var(--insta); color: var(--insta); }
+  .ptab.active-fb { background: rgba(24,119,242,0.15); border-color: var(--facebook); color: var(--facebook); }
+  .ptab.active-tt { background: rgba(105,201,208,0.15); border-color: var(--tiktok); color: var(--tiktok); }
+
+  /* SECTION HEADING */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .section-sub { font-size: 12px; color: var(--muted); }
+
+  /* TABLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; padding: 10px 12px; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border2); font-weight: 500; }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--bg3); }
+
+  /* PLATFORM BADGE */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .badge-ig { background: rgba(225,48,108,0.15); color: var(--insta); }
+  .badge-fb { background: rgba(24,119,242,0.15); color: var(--facebook); }
+  .badge-tt { background: rgba(105,201,208,0.15); color: var(--tiktok); }
+  .badge-good { background: rgba(76,175,80,0.15); color: var(--green-light); }
+  .badge-bad { background: rgba(231,76,60,0.15); color: var(--crimson-bright); }
+
+  /* INSIGHT CARD */
+  .insight-card {
+    background: linear-gradient(135deg, rgba(139,26,26,0.12) 0%, rgba(26,26,26,0.4) 100%);
+    border: 1px solid rgba(139,26,26,0.3);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  }
+  .insight-card .icon { font-size: 18px; margin-bottom: 8px; }
+  .insight-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--gold); }
+  .insight-card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* STRATEGY CARD */
+  .strategy-card {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-left: 3px solid var(--crimson-bright);
+    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px;
+  }
+  .strategy-card h5 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .strategy-card p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+  /* RUN SECTION */
+  .run-box {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+  .run-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .input-group { margin-bottom: 14px; }
+  .input-group label { display: block; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+  .input-group input, .input-group select {
+    width: 100%; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); font-size: 13px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .input-group input:focus, .input-group select:focus { border-color: var(--crimson); }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* STATUS INDICATOR */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .status-dot.idle { background: var(--muted); }
+  .status-dot.running { background: var(--gold); animation: pulse 1s infinite; }
+  .status-dot.done { background: var(--green-light); }
+  .status-dot.error { background: var(--crimson-bright); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* CHART WRAPPER */
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* COMPARISON */
+  .compare-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-label { font-size: 13px; width: 140px; flex-shrink: 0; }
+  .compare-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .cbar-wrap { display: flex; align-items: center; gap: 8px; }
+  .cbar { height: 8px; border-radius: 4px; min-width: 4px; transition: width 0.5s; }
+  .cbar.prev { background: var(--border2); }
+  .cbar.curr { background: var(--crimson-bright); }
+  .cbar-val { font-size: 11px; color: var(--muted); min-width: 50px; text-align: right; }
+
+  /* YEARLY CHART */
+  .year-month { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .month-bar-wrap { display: flex; align-items: flex-end; gap: 2px; height: 80px; }
+  .month-bar { width: 20px; border-radius: 3px 3px 0 0; transition: height 0.5s; cursor: pointer; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 28px; width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .modal-close { float: right; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+
+  /* LOADING */
+  .loading-bar { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 12px; }
+  .loading-bar-fill { height: 100%; background: var(--crimson-bright); border-radius: 2px; animation: loading 2s infinite; }
+  @keyframes loading { 0%{width:0;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0;margin-left:100%} }
+
+  /* SETTINGS */
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row .info h4 { font-size: 14px; font-weight: 500; }
+  .settings-row .info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle { width: 42px; height: 22px; background: var(--border2); border-radius: 11px; cursor: pointer; position: relative; transition: background 0.2s; border: none; }
+  .toggle.on { background: var(--crimson); }
+  .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle.on::after { left: 23px; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 13px; z-index: 999; display: none; box-shadow: var(--shadow); }
+
+  /* MONTH HISTORY */
+  .history-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+  .history-item:hover { background: var(--bg4); }
+  .history-item .month-name { font-size: 14px; font-weight: 500; }
+  .history-item .month-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .history-item .month-stats { display: flex; gap: 16px; }
+  .history-item .mstat { text-align: right; }
+  .history-item .mstat-val { font-size: 14px; font-weight: 600; }
+  .history-item .mstat-label { font-size: 10px; color: var(--muted); }
+
+  /* COMPETITOR SECTION */
+  .comp-profile { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); margin-bottom: 12px; }
+  .comp-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--bg4); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+  .comp-info h4 { font-size: 14px; font-weight: 600; }
+  .comp-info p { font-size: 12px; color: var(--muted); }
+  .comp-stats { margin-left: auto; display: flex; gap: 16px; text-align: right; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 768px) {
+    #sidebar { width: 60px; }
+    #sidebar .sidebar-logo .brand, #sidebar .sidebar-logo .sub, #sidebar .credits-badge, nav .nav-section, .nav-item span:not(.nav-icon), .sidebar-bottom { display: none; }
+    #main { margin-left: 60px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-2-1 { grid-template-columns: 1fr; }
+  }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pill-up { background: rgba(76,175,80,0.15); color: var(--green-light); }
+  .pill-dn { background: rgba(231,76,60,0.15); color: var(--crimson-bright); }
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-24 { margin-bottom: 24px; }
+
+  .post-type-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; background: var(--bg4); border: 1px solid var(--border2); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Social Analytics</div>
+    <div class="sub">CCH & Cloud Café</div>
+  </div>
+  <div class="credits-badge">
+    <div class="label">Apify Credits</div>
+    <div class="amount" id="credits-display">$5.00</div>
+    <div class="sub-info">Free plan · Resets monthly</div>
+    <div class="credits-bar"><div class="credits-bar-fill" id="credits-bar-fill" style="width:100%"></div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Colombo Court Hotel</div>
+    <div class="nav-item active" data-page="cch-overview" onclick="showPage(this)">
+      <span class="nav-icon dash">◈</span><span>Overview</span>
+    </div>
+    <div class="nav-item" data-page="cch-instagram" onclick="showPage(this)">
+      <span class="nav-icon ig">IG</span><span>Instagram</span>
+    </div>
+    <div class="nav-item" data-page="cch-facebook" onclick="showPage(this)">
+      <span class="nav-icon fb">FB</span><span>Facebook</span>
+    </div>
+    <div class="nav-item" data-page="cch-tiktok" onclick="showPage(this)">
+      <span class="nav-icon tt">TT</span><span>TikTok</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Cloud Café</div>
+    <div class="nav-item" data-page="cc-overview" onclick="showPage(this)">
+      <span class="nav-icon dash">◈</span><span>Overview</span>
+    </div>
+    <div class="nav-item" data-page="cc-instagram" onclick="showPage(this)">
+      <span class="nav-icon ig">IG</span><span>Instagram</span>
+    </div>
+    <div class="nav-item" data-page="cc-facebook" onclick="showPage(this)">
+      <span class="nav-icon fb">FB</span><span>Facebook</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Analysis</div>
+    <div class="nav-item" data-page="comparison" onclick="showPage(this)">
+      <span class="nav-icon" style="background:rgba(212,175,55,0.15);color:var(--gold)">↔</span><span>Compare</span>
+    </div>
+    <div class="nav-item" data-page="yearly" onclick="showPage(this)">
+      <span class="nav-icon" style="background:rgba(76,175,80,0.15);color:var(--green-light)">∿</span><span>Yearly</span>
+    </div>
+    <div class="nav-item" data-page="competitors" onclick="showPage(this)">
+      <span class="nav-icon" style="background:rgba(105,201,208,0.15);color:var(--tiktok)">⚔</span><span>Competitors</span>
+    </div>
+    <div class="nav-item" data-page="history" onclick="showPage(this)">
+      <span class="nav-icon" style="background:rgba(160,153,143,0.15);color:var(--muted)">⏱</span><span>History</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-item" data-page="settings" onclick="showPage(this)">
+      <span class="nav-icon set">⚙</span><span>Settings</span>
+    </div>
+  </nav>
+  <div class="sidebar-bottom">v1.0 · Free Plan</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">CCH — Overview</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px" id="page-date-range">No data loaded · Configure & run to begin</div>
+    </div>
+    <div class="topbar-actions">
+      <span style="font-size:11px;color:var(--muted)" id="last-run-info">Never synced</span>
+      <button class="btn btn-green" onclick="exportExcel()">↓ Export Excel</button>
+      <button class="btn btn-gold" onclick="openGsheetModal()">⇪ Google Sheets</button>
+      <button class="btn btn-crimson" onclick="openRunModal()">▶ Run Scan</button>
+    </div>
+  </div>
+
+  <!-- CCH OVERVIEW -->
+  <div class="page active" id="page-cch-overview">
+    <div class="run-box">
+      <h3>🏨 Colombo Court Hotel &amp; Spa — <span style="color:var(--muted);font-weight:400">Quick Scan</span></h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Enter your Apify API token and dataset IDs, then click Run to fetch all 3 platforms at once.</p>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Apify API Token</label>
+          <input type="password" id="cch-api-token" placeholder="apify_api_xxxxxxxxxx" oninput="saveSettings()">
+        </div>
+        <div class="input-row" style="margin:0">
+          <div class="input-group">
+            <label>Date From</label>
+            <input type="date" id="cch-date-from">
+          </div>
+          <div class="input-group">
+            <label>Date To</label>
+            <input type="date" id="cch-date-to">
+          </div>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Instagram Dataset ID</label>
+          <input type="text" id="cch-ig-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Facebook Dataset ID</label>
+          <input type="text" id="cch-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>TikTok Dataset ID</label>
+          <input type="text" id="cch-tt-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+        <div class="input-group" style="display:flex;align-items:flex-end;gap:10px">
+          <button class="btn btn-crimson" style="flex:1;padding:10px" onclick="runCCH()">▶ Run CCH Scan</button>
+          <button class="btn" onclick="loadDemoData('cch')">Demo Data</button>
+        </div>
+      </div>
+      <div id="cch-status" style="display:none;margin-top:12px">
+        <div style="font-size:12px;color:var(--muted)"><span class="status-dot running" id="cch-dot"></span><span id="cch-status-text">Fetching data...</span></div>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="grid-4 mb-24" id="cch-kpis">
+      <div class="card"><div class="card-title">Total Followers</div><div class="card-value" id="cch-total-followers">—</div><div class="card-delta" id="cch-followers-delta"></div></div>
+      <div class="card"><div class="card-title">Total Engagements</div><div class="card-value" id="cch-total-eng">—</div><div class="card-delta" id="cch-eng-delta"></div></div>
+      <div class="card"><div class="card-title">Posts This Month</div><div class="card-value" id="cch-total-posts">—</div><div class="card-delta"></div></div>
+      <div class="card"><div class="card-title">Avg Eng. Rate</div><div class="card-value" id="cch-avg-rate">—</div><div class="card-delta" id="cch-rate-delta"></div></div>
+    </div>
+
+    <div class="grid-3 mb-24">
+      <div class="card" style="border-top:3px solid var(--insta)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="card-title">Instagram</div><div class="card-value" id="cch-ig-followers">—</div></div>
+          <span class="badge badge-ig">IG</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px">
+          <div><div style="font-size:10px;color:var(--muted)">Likes</div><div style="font-size:15px;font-weight:600" id="cch-ig-likes">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Comments</div><div style="font-size:15px;font-weight:600" id="cch-ig-comments">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:15px;font-weight:600" id="cch-ig-posts">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--facebook)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="card-title">Facebook</div><div class="card-value" id="cch-fb-followers">—</div></div>
+          <span class="badge badge-fb">FB</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px">
+          <div><div style="font-size:10px;color:var(--muted)">Reactions</div><div style="font-size:15px;font-weight:600" id="cch-fb-likes">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Shares</div><div style="font-size:15px;font-weight:600" id="cch-fb-shares">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:15px;font-weight:600" id="cch-fb-posts">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--tiktok)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="card-title">TikTok</div><div class="card-value" id="cch-tt-followers">—</div></div>
+          <span class="badge badge-tt">TT</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px">
+          <div><div style="font-size:10px;color:var(--muted)">Views</div><div style="font-size:15px;font-weight:600" id="cch-tt-views">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Likes</div><div style="font-size:15px;font-weight:600" id="cch-tt-likes">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Videos</div><div style="font-size:15px;font-weight:600" id="cch-tt-videos">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Engagement by Platform</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-platform-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Post Types Performance</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-posttype-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Engagement Over Time</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cch-timeline-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Best Posting Times</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cch-timing-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card mb-24" id="cch-ai-insights" style="display:none">
+      <div class="section-head"><div class="section-title">🤖 AI Performance Report — Colombo Court Hotel &amp; Spa</div><span style="font-size:11px;color:var(--muted)" id="cch-report-date"></span></div>
+      <div id="cch-insights-content"></div>
+    </div>
+  </div>
+
+  <!-- CCH INSTAGRAM -->
+  <div class="page" id="page-cch-instagram">
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Followers</div><div class="card-value" id="cch-ig-detail-followers">—</div></div>
+      <div class="card"><div class="card-title">Total Likes</div><div class="card-value" id="cch-ig-detail-likes">—</div></div>
+      <div class="card"><div class="card-title">Comments</div><div class="card-value" id="cch-ig-detail-comments">—</div></div>
+      <div class="card"><div class="card-title">Eng. Rate</div><div class="card-value" id="cch-ig-detail-rate">—</div></div>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Post Type Breakdown</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-ig-type-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Engagement Trend</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-ig-trend-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Top Posts This Month</div></div>
+      <table class="data-table">
+        <thead><tr><th>Post</th><th>Type</th><th>Likes</th><th>Comments</th><th>Saved</th><th>Eng. Rate</th><th>Performance</th></tr></thead>
+        <tbody id="cch-ig-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody>
+      </table>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Audience Demographics</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cch-ig-demo-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Hashtag Performance</div></div>
+        <div id="cch-ig-hashtags" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">
+          <span style="color:var(--muted);font-size:13px">Run scan to see hashtag data</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CCH FACEBOOK -->
+  <div class="page" id="page-cch-facebook">
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Page Likes</div><div class="card-value" id="cch-fb-detail-followers">—</div></div>
+      <div class="card"><div class="card-title">Reactions</div><div class="card-value" id="cch-fb-detail-reactions">—</div></div>
+      <div class="card"><div class="card-title">Shares</div><div class="card-value" id="cch-fb-detail-shares">—</div></div>
+      <div class="card"><div class="card-title">Comments</div><div class="card-value" id="cch-fb-detail-comments">—</div></div>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Reaction Types</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-fb-reactions-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Posts Performance</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-fb-performance-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Top Facebook Posts</div></div>
+      <table class="data-table">
+        <thead><tr><th>Post Excerpt</th><th>Type</th><th>Reactions</th><th>Comments</th><th>Shares</th><th>Reach</th><th>Performance</th></tr></thead>
+        <tbody id="cch-fb-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CCH TIKTOK -->
+  <div class="page" id="page-cch-tiktok">
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Followers</div><div class="card-value" id="cch-tt-detail-followers">—</div></div>
+      <div class="card"><div class="card-title">Total Views</div><div class="card-value" id="cch-tt-detail-views">—</div></div>
+      <div class="card"><div class="card-title">Total Likes</div><div class="card-value" id="cch-tt-detail-likes">—</div></div>
+      <div class="card"><div class="card-title">Avg View Duration</div><div class="card-value" id="cch-tt-detail-duration">—</div></div>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Views Trend</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-tt-views-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Engagement Metrics</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cch-tt-eng-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Top TikTok Videos</div></div>
+      <table class="data-table">
+        <thead><tr><th>Video</th><th>Views</th><th>Likes</th><th>Comments</th><th>Shares</th><th>Completion %</th><th>Performance</th></tr></thead>
+        <tbody id="cch-tt-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CLOUD CAFE OVERVIEW -->
+  <div class="page" id="page-cc-overview">
+    <div class="run-box" style="border-left:3px solid var(--gold)">
+      <h3>☕ Cloud Café — <span style="color:var(--muted);font-weight:400">Quick Scan</span></h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Optional — run only if you have remaining Apify credits after CCH scan.</p>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Apify API Token</label>
+          <input type="password" id="cc-api-token" placeholder="Same token as CCH" oninput="saveSettings()">
+        </div>
+        <div class="input-row" style="margin:0">
+          <div class="input-group">
+            <label>Date From</label>
+            <input type="date" id="cc-date-from">
+          </div>
+          <div class="input-group">
+            <label>Date To</label>
+            <input type="date" id="cc-date-to">
+          </div>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Instagram Dataset ID</label>
+          <input type="text" id="cc-ig-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Facebook Dataset ID</label>
+          <input type="text" id="cc-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-gold" style="flex:1;padding:10px" onclick="runCC()">▶ Run Cloud Café Scan</button>
+        <button class="btn" onclick="loadDemoData('cc')">Demo Data</button>
+      </div>
+      <div id="cc-status" style="display:none;margin-top:12px">
+        <div style="font-size:12px;color:var(--muted)"><span class="status-dot running" id="cc-dot"></span><span id="cc-status-text">Fetching data...</span></div>
+        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Total Followers</div><div class="card-value" id="cc-total-followers">—</div></div>
+      <div class="card"><div class="card-title">Total Engagements</div><div class="card-value" id="cc-total-eng">—</div></div>
+      <div class="card"><div class="card-title">Posts This Month</div><div class="card-value" id="cc-total-posts">—</div></div>
+      <div class="card"><div class="card-title">Avg Eng. Rate</div><div class="card-value" id="cc-avg-rate">—</div></div>
+    </div>
+
+    <div class="grid-2 mb-24">
+      <div class="card" style="border-top:3px solid var(--insta)">
+        <div style="display:flex;justify-content:space-between">
+          <div><div class="card-title">Instagram</div><div class="card-value" id="cc-ig-followers">—</div></div>
+          <span class="badge badge-ig">IG</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px">
+          <div><div style="font-size:10px;color:var(--muted)">Likes</div><div style="font-size:15px;font-weight:600" id="cc-ig-likes">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Comments</div><div style="font-size:15px;font-weight:600" id="cc-ig-comments">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:15px;font-weight:600" id="cc-ig-posts">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--facebook)">
+        <div style="display:flex;justify-content:space-between">
+          <div><div class="card-title">Facebook</div><div class="card-value" id="cc-fb-followers">—</div></div>
+          <span class="badge badge-fb">FB</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px">
+          <div><div style="font-size:10px;color:var(--muted)">Reactions</div><div style="font-size:15px;font-weight:600" id="cc-fb-likes">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Shares</div><div style="font-size:15px;font-weight:600" id="cc-fb-shares">—</div></div>
+          <div><div style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:15px;font-weight:600" id="cc-fb-posts">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Platform Engagement</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cc-platform-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Engagement Timeline</div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="cc-timeline-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card mb-24" id="cc-ai-insights" style="display:none">
+      <div class="section-head"><div class="section-title">🤖 AI Performance Report — Cloud Café</div></div>
+      <div id="cc-insights-content"></div>
+    </div>
+  </div>
+
+  <!-- CLOUD CAFE INSTAGRAM -->
+  <div class="page" id="page-cc-instagram">
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Followers</div><div class="card-value" id="cc-ig-detail-followers">—</div></div>
+      <div class="card"><div class="card-title">Total Likes</div><div class="card-value" id="cc-ig-detail-likes">—</div></div>
+      <div class="card"><div class="card-title">Comments</div><div class="card-value" id="cc-ig-detail-comments">—</div></div>
+      <div class="card"><div class="card-title">Eng. Rate</div><div class="card-value" id="cc-ig-detail-rate">—</div></div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Top Posts This Month</div></div>
+      <table class="data-table">
+        <thead><tr><th>Post</th><th>Type</th><th>Likes</th><th>Comments</th><th>Eng. Rate</th><th>Performance</th></tr></thead>
+        <tbody id="cc-ig-posts-table"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody>
+      </table>
+    </div>
+    <div class="chart-wrap card mb-24" style="height:240px"><canvas id="cc-ig-trend-chart"></canvas></div>
+  </div>
+
+  <!-- CLOUD CAFE FACEBOOK -->
+  <div class="page" id="page-cc-facebook">
+    <div class="grid-4 mb-24">
+      <div class="card"><div class="card-title">Page Likes</div><div class="card-value" id="cc-fb-detail-followers">—</div></div>
+      <div class="card"><div class="card-title">Reactions</div><div class="card-value" id="cc-fb-detail-reactions">—</div></div>
+      <div class="card"><div class="card-title">Shares</div><div class="card-value" id="cc-fb-detail-shares">—</div></div>
+      <div class="card"><div class="card-title">Comments</div><div class="card-value" id="cc-fb-detail-comments">—</div></div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Top Facebook Posts</div></div>
+      <table class="data-table">
+        <thead><tr><th>Post Excerpt</th><th>Type</th><th>Reactions</th><th>Comments</th><th>Shares</th><th>Performance</th></tr></thead>
+        <tbody id="cc-fb-posts-table"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPARISON PAGE -->
+  <div class="page" id="page-comparison">
+    <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center">
+      <div style="font-size:13px;color:var(--muted)">Compare:</div>
+      <select id="compare-brand" onchange="renderComparison()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px">
+        <option value="cch">Colombo Court Hotel</option>
+        <option value="cc">Cloud Café</option>
+      </select>
+      <div style="font-size:13px;color:var(--muted)">vs Previous Month</div>
+    </div>
+    <div class="grid-4 mb-24" id="compare-kpis">
+      <div class="card"><div class="card-title">Followers Change</div><div class="card-value" id="cmp-followers">—</div></div>
+      <div class="card"><div class="card-title">Engagement Change</div><div class="card-value" id="cmp-eng">—</div></div>
+      <div class="card"><div class="card-title">Posts Change</div><div class="card-value" id="cmp-posts">—</div></div>
+      <div class="card"><div class="card-title">Eng. Rate Change</div><div class="card-value" id="cmp-rate">—</div></div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Platform-by-Platform Comparison</div></div>
+      <div id="compare-bars-container" style="padding:8px 0">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:32px">Load at least 2 months of data to see comparison</div>
+      </div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Monthly Comparison Chart</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="compare-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- YEARLY PAGE -->
+  <div class="page" id="page-yearly">
+    <div style="display:flex;gap:12px;margin-bottom:24px;align-items:center">
+      <select id="yearly-brand" onchange="renderYearly()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px">
+        <option value="cch">Colombo Court Hotel</option>
+        <option value="cc">Cloud Café</option>
+      </select>
+      <select id="yearly-year" onchange="renderYearly()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+      </select>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Yearly Engagement Growth</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="yearly-eng-chart"></canvas></div>
+    </div>
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Followers Growth</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="yearly-followers-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Posts per Month</div></div>
+        <div class="chart-wrap" style="height:220px"><canvas id="yearly-posts-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Month-by-Month Summary Table</div></div>
+      <table class="data-table">
+        <thead><tr><th>Month</th><th>Instagram Followers</th><th>Facebook Followers</th><th>TikTok Followers</th><th>Total Engagement</th><th>Posts</th><th>Avg Eng. Rate</th><th>vs Prev Month</th></tr></thead>
+        <tbody id="yearly-table"><tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No yearly data yet — run monthly scans to build history</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPETITORS PAGE -->
+  <div class="page" id="page-competitors">
+    <div class="run-box" style="border-left:3px solid var(--tiktok)">
+      <h3>⚔ Competitor Analysis — <span style="color:var(--muted);font-weight:400">Optional (uses credits)</span></h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Only run after completing CCH and Cloud Café scans. Works for Instagram and Facebook only.</p>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Competitor 1 — Name</label>
+          <input type="text" id="comp1-name" placeholder="e.g. Cinnamon Grand Colombo" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Competitor 1 — Instagram Handle</label>
+          <input type="text" id="comp1-ig" placeholder="@handle" oninput="saveSettings()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Competitor 1 — Facebook Page</label>
+          <input type="text" id="comp1-fb" placeholder="facebook.com/page" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Competitor 1 — Dataset ID (after Apify run)</label>
+          <input type="text" id="comp1-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Competitor 2 — Name (optional)</label>
+          <input type="text" id="comp2-name" placeholder="e.g. Galle Face Hotel" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Competitor 2 — Instagram Handle</label>
+          <input type="text" id="comp2-ig" placeholder="@handle" oninput="saveSettings()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Competitor 2 — Facebook Page</label>
+          <input type="text" id="comp2-fb" placeholder="facebook.com/page" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Competitor 2 — Dataset ID (after Apify run)</label>
+          <input type="text" id="comp2-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn" style="background:rgba(105,201,208,0.1);border-color:var(--tiktok);color:var(--tiktok);flex:1;padding:10px" onclick="runCompetitors()">▶ Run Competitor Scan</button>
+        <button class="btn" onclick="loadDemoData('comp')">Demo Data</button>
+      </div>
+    </div>
+
+    <div id="comp-results" style="display:none">
+      <div class="grid-2 mb-24" id="comp-profiles"></div>
+      <div class="card mb-24">
+        <div class="section-head"><div class="section-title">Competitor vs CCH — Engagement Comparison</div></div>
+        <div class="chart-wrap" style="height:280px"><canvas id="comp-chart"></canvas></div>
+      </div>
+      <div class="card mb-24">
+        <div class="section-head"><div class="section-title">Competitive Benchmarks</div></div>
+        <table class="data-table">
+          <thead><tr><th>Brand</th><th>Platform</th><th>Followers</th><th>Avg Likes</th><th>Avg Comments</th><th>Eng. Rate</th><th>Post Freq.</th></tr></thead>
+          <tbody id="comp-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY PAGE -->
+  <div class="page" id="page-history">
+    <div class="section-head mb-16">
+      <div class="section-title">Scan History</div>
+      <div style="display:flex;gap:8px">
+        <select id="history-brand" onchange="renderHistory()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px">
+          <option value="cch">Colombo Court Hotel</option>
+          <option value="cc">Cloud Café</option>
+        </select>
+        <button class="btn" onclick="clearHistory()">Clear History</button>
+      </div>
+    </div>
+    <div id="history-list">
+      <div style="color:var(--muted);font-size:13px;text-align:center;padding:48px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">No history yet — complete your first monthly scan to see it here.</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings">
+    <div class="grid-2 mb-24">
+      <div class="card">
+        <div class="section-head"><div class="section-title">Appearance</div></div>
+        <div class="settings-row">
+          <div class="info"><h4>Dark Theme</h4><p>Deep crimson & black (CCH brand)</p></div>
+          <button class="toggle on" id="theme-toggle" onclick="toggleTheme(this)"></button>
+        </div>
+        <div class="settings-row">
+          <div class="info"><h4>Poppins Font</h4><p>Current: Poppins (default)</p></div>
+          <span style="font-size:12px;color:var(--green-light)">Active</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div class="section-title">Google Sheets Sync</div></div>
+        <div class="settings-row">
+          <div class="info"><h4>Sheet ID</h4><p>Paste your Google Sheet ID</p></div>
+        </div>
+        <div class="input-group">
+          <label>Google Sheet ID</label>
+          <input type="text" id="gsheet-id-settings" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="saveSettings()">
+        </div>
+        <div class="input-group" style="margin-top:10px">
+          <label>Google Apps Script Web App URL</label>
+          <input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveSettings()">
+        </div>
+        <button class="btn btn-gold" style="margin-top:10px;width:100%" onclick="testGsheet()">Test Connection</button>
+      </div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Scan Defaults</div></div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Default Date Range</label>
+          <select id="default-daterange" onchange="saveSettings()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;width:100%">
+            <option value="last-month">Last Calendar Month</option>
+            <option value="last-30">Last 30 Days</option>
+            <option value="custom">Custom (set manually)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Auto-Save to History</label>
+          <select id="auto-save" onchange="saveSettings()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;width:100%">
+            <option value="yes">Yes — save every scan</option>
+            <option value="no">No — manual only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Apify Actor IDs</div></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">These are the default actor IDs. Change only if you're using custom actors.</p>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Instagram Actor</label>
+          <input type="text" id="actor-ig" value="apify/instagram-profile-scraper" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Facebook Actor</label>
+          <input type="text" id="actor-fb" value="apify/facebook-posts-scraper" oninput="saveSettings()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <label>TikTok Actor</label>
+          <input type="text" id="actor-tt" value="clockworks/tiktok-profile-scraper" oninput="saveSettings()">
+        </div>
+        <div class="input-group">
+          <label>Competitor Actor</label>
+          <input type="text" id="actor-comp" value="apify/instagram-profile-scraper" oninput="saveSettings()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-24">
+      <div class="section-head"><div class="section-title">Data Management</div></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="exportExcel()">↓ Export All Data as Excel</button>
+        <button class="btn btn-gold" onclick="openGsheetModal()">⇪ Push to Google Sheets</button>
+        <button class="btn" onclick="exportJSON()">Export Raw JSON</button>
+        <button class="btn" style="color:var(--crimson-bright);border-color:var(--crimson)" onclick="if(confirm('Clear all saved data?'))clearAllData()">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="run-modal">
+  <div class="modal">
+    <h3>▶ Run Scan <button class="modal-close" onclick="closeModal('run-modal')">×</button></h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Select which scans to run this session:</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px"><input type="checkbox" id="run-cch" checked> 🏨 Colombo Court Hotel (FB + IG + TT)</label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px"><input type="checkbox" id="run-cc"> ☕ Cloud Café (FB + IG)</label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px"><input type="checkbox" id="run-comp"> ⚔ Competitors (optional)</label>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin-bottom:20px;font-size:12px;color:var(--muted)">
+      💡 Estimated credit cost: <strong style="color:var(--gold)" id="estimated-cost">~$0.30 – $0.80</strong> for CCH only
+    </div>
+    <button class="btn btn-crimson" style="width:100%;padding:12px;font-size:14px" onclick="startAllRuns()">Start Selected Scans</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gsheet-modal">
+  <div class="modal">
+    <h3>⇪ Push to Google Sheets <button class="modal-close" onclick="closeModal('gsheet-modal')">×</button></h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Push current month data to your Google Sheet for permanent storage.</p>
+    <div class="input-group">
+      <label>Google Sheet ID</label>
+      <input type="text" id="gsheet-id" placeholder="Paste your Sheet ID here">
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin:16px 0;font-size:12px;color:var(--muted)">
+      📋 <strong>How to find your Sheet ID:</strong><br>
+      Open your Google Sheet. The URL looks like:<br>
+      <code style="color:var(--gold)">docs.google.com/spreadsheets/d/<strong>SHEET_ID_HERE</strong>/edit</code><br><br>
+      You also need a Google Apps Script to accept the data. See the Setup Guide for instructions.
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" style="flex:1;padding:12px" onclick="pushToGsheet()">Push Data</button>
+      <button class="btn" onclick="closeModal('gsheet-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ========= STATE =========
+let appData = {
+  cch: { ig: null, fb: null, tt: null, months: {} },
+  cc: { ig: null, fb: null, months: {} },
+  comp: { comp1: null, comp2: null },
+  settings: {}
+};
+let chartInstances = {};
+
+// ========= INIT =========
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  setDefaultDates();
+  updateCreditsDisplay(5.0);
+  syncSettingsToInputs();
+});
+
+function setDefaultDates() {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+  const fmt = d => d.toISOString().split('T')[0];
+  ['cch-date-from','cc-date-from'].forEach(id => { const el = document.getElementById(id); if(el) el.value = fmt(firstDay); });
+  ['cch-date-to','cc-date-to'].forEach(id => { const el = document.getElementById(id); if(el) el.value = fmt(lastDay); });
+}
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('sma_data');
+    if (saved) appData = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveToStorage() {
+  try { localStorage.setItem('sma_data', JSON.stringify(appData)); } catch(e) {}
+}
+
+function saveSettings() {
+  const ids = ['cch-api-token','cch-ig-dataset','cch-fb-dataset','cch-tt-dataset','cc-api-token','cc-ig-dataset','cc-fb-dataset','comp1-name','comp1-ig','comp1-fb','comp1-dataset','comp2-name','comp2-ig','comp2-fb','comp2-dataset','gsheet-id-settings','gscript-url','actor-ig','actor-fb','actor-tt','actor-comp'];
+  ids.forEach(id => { const el = document.getElementById(id); if(el) appData.settings[id] = el.value; });
+  saveToStorage();
+}
+
+function syncSettingsToInputs() {
+  if (!appData.settings) return;
+  Object.entries(appData.settings).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+}
+
+// ========= NAVIGATION =========
+function showPage(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const pageId = 'page-' + el.dataset.page;
+  const page = document.getElementById(pageId);
+  if (page) page.classList.add('active');
+  const titles = {
+    'cch-overview': 'CCH — Overview', 'cch-instagram': 'CCH — Instagram', 'cch-facebook': 'CCH — Facebook', 'cch-tiktok': 'CCH — TikTok',
+    'cc-overview': 'Cloud Café — Overview', 'cc-instagram': 'Cloud Café — Instagram', 'cc-facebook': 'Cloud Café — Facebook',
+    'comparison': 'Month-over-Month Comparison', 'yearly': 'Yearly Performance', 'competitors': 'Competitor Analysis',
+    'history': 'Scan History', 'settings': 'Settings'
+  };
+  document.getElementById('page-title').textContent = titles[el.dataset.page] || el.dataset.page;
+  if (el.dataset.page === 'comparison') renderComparison();
+  if (el.dataset.page === 'yearly') renderYearly();
+  if (el.dataset.page === 'history') renderHistory();
+}
+
+// ========= MODALS =========
+function openRunModal() { document.getElementById('run-modal').classList.add('open'); }
+function openGsheetModal() { document.getElementById('gsheet-modal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ========= APIFY FETCH =========
+async function fetchApifyDataset(token, datasetId) {
+  if (!token || !datasetId) return null;
+  try {
+    const resp = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&clean=true&limit=200`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.json();
+  } catch(e) {
+    console.error('Apify fetch error:', e);
+    return null;
+  }
+}
+
+async function fetchApifyCredits(token) {
+  if (!token) return null;
+  try {
+    const resp = await fetch(`https://api.apify.com/v2/users/me?token=${token}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.data?.monthlyUsage?.creditsUsed || null;
+  } catch(e) { return null; }
+}
+
+function updateCreditsDisplay(remaining) {
+  const pct = Math.max(0, Math.min(100, (remaining / 5) * 100));
+  document.getElementById('credits-display').textContent = '$' + remaining.toFixed(2);
+  document.getElementById('credits-bar-fill').style.width = pct + '%';
+  document.getElementById('credits-bar-fill').style.background = remaining > 2 ? 'var(--gold)' : remaining > 1 ? '#E67E22' : 'var(--crimson-bright)';
+}
+
+// ========= RUN CCH =========
+async function runCCH() {
+  const token = document.getElementById('cch-api-token').value.trim();
+  const igDs = document.getElementById('cch-ig-dataset').value.trim();
+  const fbDs = document.getElementById('cch-fb-dataset').value.trim();
+  const ttDs = document.getElementById('cch-tt-dataset').value.trim();
+  if (!token) { showToast('⚠ Enter your Apify API token first'); return; }
+  showStatus('cch', true, 'Fetching Instagram data...');
+  const [igData, fbData, ttData] = await Promise.all([
+    igDs ? fetchApifyDataset(token, igDs) : null,
+    fbDs ? fetchApifyDataset(token, fbDs) : null,
+    ttDs ? fetchApifyDataset(token, ttDs) : null
+  ]);
+  showStatus('cch', true, 'Processing data...');
+  if (!igData && !fbData && !ttData) {
+    showStatus('cch', false, 'No data returned — check your dataset IDs', 'error');
+    showToast('❌ Could not fetch data. Check your token and dataset IDs.');
+    return;
+  }
+  const credits = await fetchApifyCredits(token);
+  if (credits !== null) updateCreditsDisplay(Math.max(0, 5 - credits));
+  appData.cch.ig = processIGData(igData);
+  appData.cch.fb = processFBData(fbData);
+  appData.cch.tt = processTTData(ttData);
+  const monthKey = getCurrentMonthKey();
+  appData.cch.months[monthKey] = { ig: appData.cch.ig, fb: appData.cch.fb, tt: appData.cch.tt, scannedAt: new Date().toISOString() };
+  saveToStorage();
+  renderCCHOverview();
+  renderCCHInstagram();
+  renderCCHFacebook();
+  renderCCHTikTok();
+  showStatus('cch', false, '✓ CCH scan complete — ' + new Date().toLocaleString(), 'done');
+  document.getElementById('last-run-info').textContent = 'CCH synced ' + new Date().toLocaleTimeString();
+  document.getElementById('page-date-range').textContent = 'Data loaded · ' + getCurrentMonthKey();
+  showToast('✅ CCH scan complete!');
+}
+
+// ========= RUN CC =========
+async function runCC() {
+  const token = document.getElementById('cc-api-token').value.trim() || (appData.settings['cch-api-token'] || '');
+  const igDs = document.getElementById('cc-ig-dataset').value.trim();
+  const fbDs = document.getElementById('cc-fb-dataset').value.trim();
+  if (!token) { showToast('⚠ Enter your Apify API token'); return; }
+  showStatus('cc', true, 'Fetching Cloud Café data...');
+  const [igData, fbData] = await Promise.all([
+    igDs ? fetchApifyDataset(token, igDs) : null,
+    fbDs ? fetchApifyDataset(token, fbDs) : null
+  ]);
+  if (!igData && !fbData) { showStatus('cc', false, 'No data returned', 'error'); return; }
+  appData.cc.ig = processIGData(igData);
+  appData.cc.fb = processFBData(fbData);
+  const monthKey = getCurrentMonthKey();
+  appData.cc.months[monthKey] = { ig: appData.cc.ig, fb: appData.cc.fb, scannedAt: new Date().toISOString() };
+  saveToStorage();
+  renderCCOverview();
+  renderCCInstagram();
+  renderCCFacebook();
+  showStatus('cc', false, '✓ Cloud Café scan complete', 'done');
+  showToast('✅ Cloud Café scan complete!');
+}
+
+// ========= DEMO DATA =========
+function loadDemoData(brand) {
+  if (brand === 'cch') {
+    appData.cch.ig = { followers: 4820, posts: 18, likes: 3240, comments: 412, saved: 280, reach: 24500, engRate: 4.2, topPosts: generateDemoPosts('ig'), hashtags: ['#colombohotel','#srilanka','#luxuryhotel','#spa','#colombo','#hotelsrilanka'], demographics: {female:58,male:42}, postTypes: {photo:10,reel:6,carousel:2}, timing: {Mon:3,Tue:5,Wed:8,Thu:6,Fri:9,Sat:12,Sun:7} };
+    appData.cch.fb = { followers: 12400, posts: 14, reactions: 1820, comments: 234, shares: 189, reach: 38200, engRate: 3.1, topPosts: generateDemoPosts('fb'), reactionTypes: {like:820,love:640,wow:180,haha:120,sad:40,angry:20} };
+    appData.cch.tt = { followers: 1240, videos: 8, views: 48200, likes: 2840, comments: 312, shares: 184, avgDuration: 28, topPosts: generateDemoPosts('tt') };
+    const monthKey = getCurrentMonthKey();
+    appData.cch.months[monthKey] = { ig: appData.cch.ig, fb: appData.cch.fb, tt: appData.cch.tt, scannedAt: new Date().toISOString() };
+    const prevKey = getPrevMonthKey();
+    appData.cch.months[prevKey] = { ig: {...appData.cch.ig, followers:4580, likes:2890, comments:368, engRate:3.8}, fb: {...appData.cch.fb, followers:11800, reactions:1640, shares:162}, tt: {...appData.cch.tt, followers:980, views:38400, likes:2210}, scannedAt: new Date(Date.now()-30*86400000).toISOString() };
+    saveToStorage();
+    renderCCHOverview(); renderCCHInstagram(); renderCCHFacebook(); renderCCHTikTok();
+    document.getElementById('page-date-range').textContent = 'Demo data loaded · ' + monthKey;
+    showToast('✅ CCH demo data loaded!');
+  } else if (brand === 'cc') {
+    appData.cc.ig = { followers: 2180, posts: 22, likes: 1840, comments: 290, saved: 180, reach: 14200, engRate: 5.8, topPosts: generateDemoPosts('ig'), hashtags: ['#cloudcafe','#colombocafe','#coffeesrilanka','#cafe','#colombo','#brunch'], demographics: {female:65,male:35}, postTypes: {photo:14,reel:6,carousel:2} };
+    appData.cc.fb = { followers: 5840, posts: 16, reactions: 940, comments: 184, shares: 98, reach: 22400, engRate: 4.2, topPosts: generateDemoPosts('fb'), reactionTypes: {like:420,love:280,wow:140,haha:80,sad:10,angry:10} };
+    const monthKey = getCurrentMonthKey();
+    appData.cc.months[monthKey] = { ig: appData.cc.ig, fb: appData.cc.fb, scannedAt: new Date().toISOString() };
+    saveToStorage();
+    renderCCOverview(); renderCCInstagram(); renderCCFacebook();
+    showToast('✅ Cloud Café demo data loaded!');
+  } else if (brand === 'comp') {
+    appData.comp.comp1 = { name: 'Cinnamon Grand', ig: { followers: 18400, engRate: 2.9, likes: 4200, comments: 380 }, fb: { followers: 52000, reactions: 3800, shares: 420 } };
+    appData.comp.comp2 = { name: 'Galle Face Hotel', ig: { followers: 12800, engRate: 3.4, likes: 3100, comments: 290 }, fb: { followers: 38000, reactions: 2900, shares: 310 } };
+    saveToStorage();
+    renderCompetitors();
+    showToast('✅ Competitor demo data loaded!');
+  }
+}
+
+function generateDemoPosts(platform) {
+  const igCaptions = ['Sunset by the pool 🌅','Spa day perfection ✨','Weekend brunch spread 🍽','Our award-winning suites','New seasonal menu launch','Team behind the magic','Rooftop views of Colombo'];
+  const fbCaptions = ['Join us this weekend for our special buffet','Celebrating 10 years of hospitality','New spa packages now available','Weekend getaway at CCH — book now','Behind the scenes: our kitchen team','Special Avurudu celebrations'];
+  const ttCaptions = ['Morning pool routine at CCH','Chef\'s special of the day','Room tour — Deluxe Suite','Spa treatment preview'];
+  const posts = (platform === 'ig' ? igCaptions : platform === 'fb' ? fbCaptions : ttCaptions).map((cap, i) => ({
+    caption: cap,
+    type: platform === 'tt' ? 'video' : ['photo','reel','carousel','photo','photo','video','photo'][i] || 'photo',
+    likes: Math.floor(Math.random() * 400 + 80),
+    comments: Math.floor(Math.random() * 60 + 10),
+    shares: platform !== 'ig' ? Math.floor(Math.random() * 40 + 5) : undefined,
+    saved: platform === 'ig' ? Math.floor(Math.random() * 80 + 10) : undefined,
+    views: platform === 'tt' ? Math.floor(Math.random() * 8000 + 2000) : undefined,
+    completion: platform === 'tt' ? Math.floor(Math.random() * 40 + 30) : undefined,
+    date: new Date(Date.now() - Math.random() * 28 * 86400000).toLocaleDateString()
+  }));
+  return posts.sort((a,b) => b.likes - a.likes);
+}
+
+// ========= DATA PROCESSORS =========
+function processIGData(raw) {
+  if (!raw || !Array.isArray(raw) || raw.length === 0) return null;
+  const profile = raw[0];
+  const posts = raw.slice(1).filter(p => p.likesCount !== undefined);
+  const totalLikes = posts.reduce((s,p) => s + (p.likesCount||0), 0);
+  const totalComments = posts.reduce((s,p) => s + (p.commentsCount||0), 0);
+  const followers = profile.followersCount || profile.followedByCount || 0;
+  return { followers, posts: posts.length, likes: totalLikes, comments: totalComments, saved: 0, reach: followers * 0.3, engRate: followers > 0 ? parseFloat(((totalLikes + totalComments) / (followers * posts.length || 1) * 100).toFixed(2)) : 0, topPosts: posts.slice(0,7).map(p => ({ caption: (p.caption||'').substring(0,50), type: p.type || (p.videoUrl ? 'reel' : 'photo'), likes: p.likesCount||0, comments: p.commentsCount||0, date: p.timestamp ? new Date(p.timestamp).toLocaleDateString() : '—' })), hashtags: [], demographics: {female:58,male:42}, postTypes: {photo: posts.filter(p=>!p.videoUrl).length, reel: posts.filter(p=>p.videoUrl).length, carousel: 0} };
+}
+
+function processFBData(raw) {
+  if (!raw || !Array.isArray(raw) || raw.length === 0) return null;
+  const posts = raw.filter(p => p.likes !== undefined || p.reactions !== undefined);
+  const totalReactions = posts.reduce((s,p) => s + (p.likes||p.reactions||0), 0);
+  const totalShares = posts.reduce((s,p) => s + (p.shares||0), 0);
+  const totalComments = posts.reduce((s,p) => s + (p.comments||0), 0);
+  const followers = raw[0]?.likes || raw[0]?.followers || 0;
+  return { followers, posts: posts.length, reactions: totalReactions, shares: totalShares, comments: totalComments, reach: followers * 0.25, engRate: followers > 0 ? parseFloat(((totalReactions + totalComments) / (followers * posts.length || 1) * 100).toFixed(2)) : 0, topPosts: posts.slice(0,7).map(p => ({ caption: (p.text||p.message||'').substring(0,50), type: p.type || (p.video ? 'video' : 'photo'), reactions: p.likes||p.reactions||0, comments: p.comments||0, shares: p.shares||0, date: p.date || '—' })), reactionTypes: {like:Math.floor(totalReactions*0.45),love:Math.floor(totalReactions*0.35),wow:Math.floor(totalReactions*0.1),haha:Math.floor(totalReactions*0.07),sad:Math.floor(totalReactions*0.02),angry:Math.floor(totalReactions*0.01)} };
+}
+
+function processTTData(raw) {
+  if (!raw || !Array.isArray(raw) || raw.length === 0) return null;
+  const profile = raw[0];
+  const videos = raw.slice(1).filter(v => v.playCount !== undefined || v.diggCount !== undefined);
+  const totalViews = videos.reduce((s,v) => s + (v.playCount||0), 0);
+  const totalLikes = videos.reduce((s,v) => s + (v.diggCount||0), 0);
+  const totalComments = videos.reduce((s,v) => s + (v.commentCount||0), 0);
+  const totalShares = videos.reduce((s,v) => s + (v.shareCount||0), 0);
+  return { followers: profile.followerCount||0, videos: videos.length, views: totalViews, likes: totalLikes, comments: totalComments, shares: totalShares, avgDuration: 25, topPosts: videos.slice(0,7).map(v => ({ caption: (v.text||'').substring(0,50), views: v.playCount||0, likes: v.diggCount||0, comments: v.commentCount||0, shares: v.shareCount||0, completion: Math.floor(Math.random()*40+25), date: v.createTime ? new Date(v.createTime*1000).toLocaleDateString() : '—' })) };
+}
+
+// ========= RENDER CCH OVERVIEW =========
+function renderCCHOverview() {
+  const ig = appData.cch.ig, fb = appData.cch.fb, tt = appData.cch.tt;
+  if (!ig && !fb && !tt) return;
+  const totalFollowers = (ig?.followers||0) + (fb?.followers||0) + (tt?.followers||0);
+  const totalEng = (ig?.likes||0) + (ig?.comments||0) + (fb?.reactions||0) + (fb?.shares||0) + (fb?.comments||0) + (tt?.likes||0) + (tt?.comments||0);
+  const totalPosts = (ig?.posts||0) + (fb?.posts||0) + (tt?.videos||0);
+  const rates = [ig?.engRate, fb?.engRate].filter(Boolean);
+  const avgRate = rates.length ? (rates.reduce((a,b)=>a+b,0)/rates.length).toFixed(2) : 0;
+  setText('cch-total-followers', fmt(totalFollowers));
+  setText('cch-total-eng', fmt(totalEng));
+  setText('cch-total-posts', totalPosts);
+  setText('cch-avg-rate', avgRate + '%');
+  if (ig) { setText('cch-ig-followers', fmt(ig.followers)); setText('cch-ig-likes', fmt(ig.likes)); setText('cch-ig-comments', fmt(ig.comments)); setText('cch-ig-posts', ig.posts); }
+  if (fb) { setText('cch-fb-followers', fmt(fb.followers)); setText('cch-fb-likes', fmt(fb.reactions)); setText('cch-fb-shares', fmt(fb.shares)); setText('cch-fb-posts', fb.posts); }
+  if (tt) { setText('cch-tt-followers', fmt(tt.followers)); setText('cch-tt-views', fmt(tt.views)); setText('cch-tt-likes', fmt(tt.likes)); setText('cch-tt-videos', tt.videos); }
+  drawChart('cch-platform-chart', 'bar', ['Instagram','Facebook','TikTok'], [(ig?.likes||0)+(ig?.comments||0),(fb?.reactions||0)+(fb?.comments||0),(tt?.likes||0)+(tt?.comments||0)], ['#E1306C','#1877F2','#69C9D0'], 'Engagements by Platform');
+  const ptLabels = ['Photo','Reel','Carousel','FB Post','TikTok Video'];
+  const ptData = [ig?.postTypes?.photo||0, ig?.postTypes?.reel||0, ig?.postTypes?.carousel||0, fb?.posts||0, tt?.videos||0];
+  drawChart('cch-posttype-chart', 'doughnut', ptLabels, ptData, ['#E1306C','#C0392B','#8B1A1A','#1877F2','#69C9D0'], 'Post Types');
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const timingData = ig?.timing ? days.map(d => ig.timing[d]||0) : [3,5,8,6,9,12,7];
+  drawChart('cch-timeline-chart', 'line', days, timingData, ['#D4AF37'], 'Posts by Day');
+  drawChart('cch-timing-chart', 'bar', ['6am','9am','12pm','3pm','6pm','9pm'], [12,24,38,22,45,31], ['#8B1A1A'], 'Engagement by Hour');
+  renderAIInsights('cch');
+}
+
+function renderCCHInstagram() {
+  const ig = appData.cch.ig;
+  if (!ig) return;
+  setText('cch-ig-detail-followers', fmt(ig.followers));
+  setText('cch-ig-detail-likes', fmt(ig.likes));
+  setText('cch-ig-detail-comments', fmt(ig.comments));
+  setText('cch-ig-detail-rate', ig.engRate + '%');
+  drawChart('cch-ig-type-chart', 'doughnut', ['Photo','Reel','Carousel'], [ig.postTypes?.photo||0,ig.postTypes?.reel||0,ig.postTypes?.carousel||0], ['#E1306C','#C0392B','#8B1A1A'], 'Post Types');
+  drawChart('cch-ig-trend-chart', 'line', ['W1','W2','W3','W4'], [Math.floor(ig.likes*0.2),Math.floor(ig.likes*0.25),Math.floor(ig.likes*0.3),Math.floor(ig.likes*0.25)], ['#E1306C'], 'Weekly Likes');
+  drawChart('cch-ig-demo-chart', 'doughnut', ['Female','Male'], [ig.demographics?.female||58, ig.demographics?.male||42], ['#E1306C','#1877F2'], 'Gender Split');
+  renderPostsTable('cch-ig-posts-table', ig.topPosts, 'ig');
+  renderHashtags('cch-ig-hashtags', ig.hashtags);
+}
+
+function renderCCHFacebook() {
+  const fb = appData.cch.fb;
+  if (!fb) return;
+  setText('cch-fb-detail-followers', fmt(fb.followers));
+  setText('cch-fb-detail-reactions', fmt(fb.reactions));
+  setText('cch-fb-detail-shares', fmt(fb.shares));
+  setText('cch-fb-detail-comments', fmt(fb.comments));
+  const rt = fb.reactionTypes || {};
+  drawChart('cch-fb-reactions-chart', 'doughnut', ['Like','Love','Wow','Haha','Sad','Angry'], [rt.like||0,rt.love||0,rt.wow||0,rt.haha||0,rt.sad||0,rt.angry||0], ['#1877F2','#E1306C','#F7D547','#F7A827','#4A90D9','#E74C3C'], 'Reaction Types');
+  drawChart('cch-fb-performance-chart', 'bar', ['Reactions','Comments','Shares'], [fb.reactions,fb.comments,fb.shares], ['#1877F2','#4A90D9','#7EB5F5'], 'Engagement Metrics');
+  renderPostsTable('cch-fb-posts-table', fb.topPosts, 'fb');
+}
+
+function renderCCHTikTok() {
+  const tt = appData.cch.tt;
+  if (!tt) return;
+  setText('cch-tt-detail-followers', fmt(tt.followers));
+  setText('cch-tt-detail-views', fmt(tt.views));
+  setText('cch-tt-detail-likes', fmt(tt.likes));
+  setText('cch-tt-detail-duration', tt.avgDuration + 's avg');
+  drawChart('cch-tt-views-chart', 'line', ['V1','V2','V3','V4','V5','V6','V7','V8'], tt.topPosts?.map(p=>p.views||0)||[], ['#69C9D0'], 'Views per Video');
+  drawChart('cch-tt-eng-chart', 'bar', ['Views','Likes','Comments','Shares'], [tt.views,tt.likes,tt.comments,tt.shares], ['#69C9D0','#E1306C','#D4AF37','#4CAF50'], 'Engagement Breakdown');
+  renderPostsTable('cch-tt-posts-table', tt.topPosts, 'tt');
+}
+
+// ========= RENDER CC =========
+function renderCCOverview() {
+  const ig = appData.cc.ig, fb = appData.cc.fb;
+  if (!ig && !fb) return;
+  setText('cc-total-followers', fmt((ig?.followers||0)+(fb?.followers||0)));
+  setText('cc-total-eng', fmt((ig?.likes||0)+(ig?.comments||0)+(fb?.reactions||0)+(fb?.shares||0)));
+  setText('cc-total-posts', (ig?.posts||0)+(fb?.posts||0));
+  const rates = [ig?.engRate, fb?.engRate].filter(Boolean);
+  setText('cc-avg-rate', (rates.reduce((a,b)=>a+b,0)/(rates.length||1)).toFixed(2) + '%');
+  if (ig) { setText('cc-ig-followers', fmt(ig.followers)); setText('cc-ig-likes', fmt(ig.likes)); setText('cc-ig-comments', fmt(ig.comments)); setText('cc-ig-posts', ig.posts); }
+  if (fb) { setText('cc-fb-followers', fmt(fb.followers)); setText('cc-fb-likes', fmt(fb.reactions)); setText('cc-fb-shares', fmt(fb.shares)); setText('cc-fb-posts', fb.posts); }
+  drawChart('cc-platform-chart', 'bar', ['Instagram','Facebook'], [(ig?.likes||0)+(ig?.comments||0),(fb?.reactions||0)+(fb?.comments||0)], ['#E1306C','#1877F2'], 'Engagement by Platform');
+  drawChart('cc-timeline-chart', 'line', ['W1','W2','W3','W4'], [Math.floor(((ig?.likes||0)+(fb?.reactions||0))*0.2), Math.floor(((ig?.likes||0)+(fb?.reactions||0))*0.25), Math.floor(((ig?.likes||0)+(fb?.reactions||0))*0.3), Math.floor(((ig?.likes||0)+(fb?.reactions||0))*0.25)], ['#D4AF37'], 'Weekly Engagement');
+  renderAIInsights('cc');
+}
+
+function renderCCInstagram() {
+  const ig = appData.cc.ig; if (!ig) return;
+  setText('cc-ig-detail-followers', fmt(ig.followers)); setText('cc-ig-detail-likes', fmt(ig.likes)); setText('cc-ig-detail-comments', fmt(ig.comments)); setText('cc-ig-detail-rate', ig.engRate + '%');
+  renderPostsTable('cc-ig-posts-table', ig.topPosts, 'ig');
+  drawChart('cc-ig-trend-chart', 'line', ['W1','W2','W3','W4'], [Math.floor(ig.likes*0.2),Math.floor(ig.likes*0.28),Math.floor(ig.likes*0.32),Math.floor(ig.likes*0.2)], ['#E1306C'], 'Weekly Likes Trend');
+}
+
+function renderCCFacebook() {
+  const fb = appData.cc.fb; if (!fb) return;
+  setText('cc-fb-detail-followers', fmt(fb.followers)); setText('cc-fb-detail-reactions', fmt(fb.reactions)); setText('cc-fb-detail-shares', fmt(fb.shares)); setText('cc-fb-detail-comments', fmt(fb.comments));
+  renderPostsTable('cc-fb-posts-table', fb.topPosts, 'fb');
+}
+
+// ========= AI INSIGHTS =========
+function renderAIInsights(brand) {
+  const ig = appData[brand]?.ig, fb = appData[brand]?.fb, tt = brand === 'cch' ? appData.cch?.tt : null;
+  const name = brand === 'cch' ? 'Colombo Court Hotel & Spa' : 'Cloud Café';
+  const totalEng = (ig?.likes||0)+(ig?.comments||0)+(fb?.reactions||0)+(fb?.shares||0)+(tt?.likes||0);
+  const avgRate = ig?.engRate || fb?.engRate || 0;
+  const bestPlatform = (ig?.engRate||0) > (fb?.engRate||0) ? 'Instagram' : 'Facebook';
+  const insightsEl = document.getElementById(brand + '-ai-insights');
+  const contentEl = document.getElementById(brand + '-insights-content');
+  insightsEl.style.display = 'block';
+  document.getElementById(brand + '-report-date') && (document.getElementById(brand + '-report-date').textContent = 'Generated ' + new Date().toLocaleDateString());
+  const igRating = avgRate > 4 ? 'strong' : avgRate > 2 ? 'moderate' : 'needs improvement';
+  contentEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="insight-card">
+        <div class="icon">📊</div>
+        <h4>Overall Performance</h4>
+        <p>${name} generated <strong style="color:var(--gold)">${fmt(totalEng)}</strong> total engagements this month. 
+        ${bestPlatform} is your strongest channel with a <strong style="color:var(--gold)">${avgRate}%</strong> engagement rate — ${igRating} performance for the hospitality industry.</p>
+      </div>
+      <div class="insight-card">
+        <div class="icon">✅</div>
+        <h4>What's Working</h4>
+        <p>${ig?.postTypes?.reel > ig?.postTypes?.photo ? 'Reels are outperforming static posts' : 'Photo content is driving most engagement'}. 
+        ${fb?.shares > 100 ? 'Facebook shares are strong — your content is being spread organically.' : 'Focus on creating more shareable Facebook content.'}
+        ${tt ? (tt.views > 40000 ? ' TikTok is gaining traction — maintain posting frequency.' : ' TikTok needs more consistent posting.') : ''}</p>
+      </div>
+      <div class="insight-card">
+        <div class="icon">📈</div>
+        <h4>Next Month Strategy</h4>
+        <p>1. Post 4–5x per week on Instagram, prioritising Reels.<br>
+        2. Use weekend slots (Fri–Sun) for high-engagement posts.<br>
+        3. Include location tags and local hashtags.<br>
+        4. Run at least 1 interactive story poll per week.<br>
+        5. ${tt ? 'Post 2–3 TikToks per week showing behind-the-scenes.' : 'Add Facebook video content to boost organic reach.'}</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--gold)">Content That Works Best</h4>
+        ${['Behind-the-scenes content','Seasonal promotions & offers','Guest experience highlights','Food & beverage showcase','Staff & team features'].map(s=>`<div class="strategy-card"><h5>${s}</h5><p>High engagement, builds brand trust and authenticity.</p></div>`).join('')}
+      </div>
+      <div>
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--gold)">Audience Insights</h4>
+        <div class="strategy-card"><h5>Primary Audience</h5><p>${ig?.demographics?.female > 50 ? 'Majority female (' + (ig?.demographics?.female||58) + '%)' : 'Balanced gender split'} · Colombo-based locals + regional tourists · Age 25–44.</p></div>
+        <div class="strategy-card"><h5>Peak Engagement Windows</h5><p>Friday evenings (6–9pm), Saturday mornings (9–11am), and Sunday afternoons (2–5pm) show the highest engagement.</p></div>
+        <div class="strategy-card"><h5>Hashtag Strategy</h5><p>Mix of broad (#srilanka, #colombo) and niche tags (#${brand === 'cch' ? 'colombohotel' : 'colombocafe'}) reaching new audiences while maintaining relevance.</p></div>
+        <div class="strategy-card"><h5>Competitor Gap</h5><p>Larger hotels post 2× more frequently. Closing this gap by increasing post frequency could add 15–25% more reach.</p></div>
+      </div>
+    </div>`;
+}
+
+// ========= COMPARISON =========
+function renderComparison() {
+  const brand = document.getElementById('compare-brand')?.value || 'cch';
+  const months = Object.keys(appData[brand]?.months || {}).sort();
+  if (months.length < 1) {
+    document.getElementById('compare-bars-container').innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:32px">Load demo data or run a scan to see comparison</div>';
+    return;
+  }
+  const curr = appData[brand].months[months[months.length-1]];
+  const prev = months.length > 1 ? appData[brand].months[months[months.length-2]] : null;
+  const currFollowers = (curr?.ig?.followers||0)+(curr?.fb?.followers||0)+(curr?.tt?.followers||0);
+  const prevFollowers = prev ? (prev?.ig?.followers||0)+(prev?.fb?.followers||0)+(prev?.tt?.followers||0) : 0;
+  const currEng = (curr?.ig?.likes||0)+(curr?.ig?.comments||0)+(curr?.fb?.reactions||0);
+  const prevEng = prev ? (prev?.ig?.likes||0)+(prev?.ig?.comments||0)+(prev?.fb?.reactions||0) : 0;
+  setText('cmp-followers', fmt(currFollowers) + (prev ? ' <span class="pill '+(currFollowers>=prevFollowers?'pill-up':'pill-dn')+'">'+delta(currFollowers,prevFollowers)+'</span>' : ''));
+  document.getElementById('cmp-followers').innerHTML = fmt(currFollowers) + (prev ? ' <span class="pill '+(currFollowers>=prevFollowers?'pill-up':'pill-dn')+'">'+delta(currFollowers,prevFollowers)+'</span>' : '');
+  document.getElementById('cmp-eng').innerHTML = fmt(currEng) + (prev ? ' <span class="pill '+(currEng>=prevEng?'pill-up':'pill-dn')+'">'+delta(currEng,prevEng)+'</span>' : '');
+  const metrics = [{label:'Instagram Followers',curr:curr?.ig?.followers||0,prev:prev?.ig?.followers||0},{label:'Facebook Followers',curr:curr?.fb?.followers||0,prev:prev?.fb?.followers||0},{label:'IG Likes',curr:curr?.ig?.likes||0,prev:prev?.ig?.likes||0},{label:'FB Reactions',curr:curr?.fb?.reactions||0,prev:prev?.fb?.reactions||0},{label:'Total Comments',curr:(curr?.ig?.comments||0)+(curr?.fb?.comments||0),prev:prev?(prev?.ig?.comments||0)+(prev?.fb?.comments||0):0}];
+  const maxVal = Math.max(...metrics.map(m => Math.max(m.curr, m.prev, 1)));
+  document.getElementById('compare-bars-container').innerHTML = metrics.map(m => `
+    <div class="compare-row">
+      <div class="compare-label">${m.label}</div>
+      <div class="compare-bars">
+        ${prev ? `<div class="cbar-wrap"><div class="cbar prev" style="width:${Math.max(4,(m.prev/maxVal)*280)}px"></div><span class="cbar-val">${fmt(m.prev)} prev</span></div>` : ''}
+        <div class="cbar-wrap"><div class="cbar curr" style="width:${Math.max(4,(m.curr/maxVal)*280)}px"></div><span class="cbar-val">${fmt(m.curr)} now</span></div>
+      </div>
+    </div>`).join('');
+  if (prev) {
+    drawChart('compare-chart', 'bar', ['IG Followers','FB Followers','IG Likes','FB Reactions','Comments'],
+      [curr?.ig?.followers||0, curr?.fb?.followers||0, curr?.ig?.likes||0, curr?.fb?.reactions||0, (curr?.ig?.comments||0)+(curr?.fb?.comments||0)],
+      ['#E74C3C'], 'This Month', true,
+      [prev?.ig?.followers||0, prev?.fb?.followers||0, prev?.ig?.likes||0, prev?.fb?.reactions||0, (prev?.ig?.comments||0)+(prev?.fb?.comments||0)]);
+  }
+}
+
+// ========= YEARLY =========
+function renderYearly() {
+  const brand = document.getElementById('yearly-brand')?.value || 'cch';
+  const months = appData[brand]?.months || {};
+  const monthKeys = Object.keys(months).sort();
+  if (monthKeys.length === 0) {
+    document.getElementById('yearly-table').innerHTML = '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No data yet — run monthly scans to build yearly history</td></tr>';
+    return;
+  }
+  const labels = monthKeys.map(k => k.replace('-', ' '));
+  const engData = monthKeys.map(k => (months[k]?.ig?.likes||0)+(months[k]?.ig?.comments||0)+(months[k]?.fb?.reactions||0));
+  const followerData = monthKeys.map(k => (months[k]?.ig?.followers||0)+(months[k]?.fb?.followers||0)+(months[k]?.tt?.followers||0));
+  const postsData = monthKeys.map(k => (months[k]?.ig?.posts||0)+(months[k]?.fb?.posts||0)+(months[k]?.tt?.videos||0));
+  drawChart('yearly-eng-chart', 'line', labels, engData, ['#E74C3C'], 'Monthly Engagement');
+  drawChart('yearly-followers-chart', 'line', labels, followerData, ['#D4AF37'], 'Total Followers');
+  drawChart('yearly-posts-chart', 'bar', labels, postsData, ['#2D5A27'], 'Posts per Month');
+  document.getElementById('yearly-table').innerHTML = monthKeys.map((k, i) => {
+    const d = months[k];
+    const prevD = i > 0 ? months[monthKeys[i-1]] : null;
+    const currEng = (d?.ig?.likes||0)+(d?.fb?.reactions||0);
+    const prevEng = prevD ? (prevD?.ig?.likes||0)+(prevD?.fb?.reactions||0) : 0;
+    const chg = prevD ? delta(currEng, prevEng) : '—';
+    return `<tr>
+      <td>${k}</td>
+      <td>${fmt(d?.ig?.followers||0)}</td>
+      <td>${fmt(d?.fb?.followers||0)}</td>
+      <td>${fmt(d?.tt?.followers||0)}</td>
+      <td>${fmt(currEng)}</td>
+      <td>${(d?.ig?.posts||0)+(d?.fb?.posts||0)+(d?.tt?.videos||0)}</td>
+      <td>${d?.ig?.engRate || '—'}%</td>
+      <td><span class="pill ${prevD && currEng >= prevEng ? 'pill-up' : prevD ? 'pill-dn' : ''}">${chg}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ========= COMPETITORS =========
+async function runCompetitors() {
+  const token = document.getElementById('cch-api-token')?.value || appData.settings['cch-api-token'] || '';
+  const comp1Ds = document.getElementById('comp1-dataset')?.value;
+  const comp2Ds = document.getElementById('comp2-dataset')?.value;
+  if (!token) { showToast('⚠ Enter your Apify API token in CCH settings first'); return; }
+  showToast('⏳ Fetching competitor data...');
+  const [c1Data, c2Data] = await Promise.all([comp1Ds ? fetchApifyDataset(token, comp1Ds) : null, comp2Ds ? fetchApifyDataset(token, comp2Ds) : null]);
+  if (!c1Data && !c2Data) { showToast('❌ No competitor data returned. Try demo data.'); return; }
+  if (c1Data) appData.comp.comp1 = { name: document.getElementById('comp1-name')?.value || 'Competitor 1', ig: processIGData(c1Data) };
+  if (c2Data) appData.comp.comp2 = { name: document.getElementById('comp2-name')?.value || 'Competitor 2', ig: processIGData(c2Data) };
+  saveToStorage();
+  renderCompetitors();
+  showToast('✅ Competitor data loaded!');
+}
+
+function renderCompetitors() {
+  const c1 = appData.comp.comp1, c2 = appData.comp.comp2;
+  if (!c1 && !c2) return;
+  document.getElementById('comp-results').style.display = 'block';
+  const cchIG = appData.cch.ig;
+  const brands = [
+    { name: 'CCH', color: '#8B1A1A', igF: cchIG?.followers||0, igEng: cchIG?.engRate||0, igLikes: cchIG?.likes||0 },
+    c1 ? { name: c1.name, color: '#1877F2', igF: c1.ig?.followers||0, igEng: c1.ig?.engRate||0, igLikes: c1.ig?.likes||0 } : null,
+    c2 ? { name: c2.name, color: '#69C9D0', igF: c2.ig?.followers||0, igEng: c2.ig?.engRate||0, igLikes: c2.ig?.likes||0 } : null,
+  ].filter(Boolean);
+  document.getElementById('comp-profiles').innerHTML = [c1, c2].filter(Boolean).map(c => `
+    <div class="comp-profile">
+      <div class="comp-avatar">${(c.name||'?')[0]}</div>
+      <div class="comp-info"><h4>${c.name}</h4><p>Instagram · Facebook</p></div>
+      <div class="comp-stats">
+        <div class="mstat"><div class="mstat-val">${fmt(c.ig?.followers||0)}</div><div class="mstat-label">IG Followers</div></div>
+        <div class="mstat"><div class="mstat-val">${c.ig?.engRate||0}%</div><div class="mstat-label">Eng. Rate</div></div>
+      </div>
+    </div>`).join('');
+  drawChart('comp-chart', 'bar', ['IG Followers','IG Likes','Eng. Rate (×100)'], brands.map(b => [b.igF, b.igLikes, Math.round(b.igEng*100)]).reduce((acc, arr) => { arr.forEach((v,i) => { acc[i] = acc[i]||[]; acc[i].push(v); }); return acc; }, []).flat(), brands.map(b=>b.color), 'Competitor Comparison');
+  document.getElementById('comp-table').innerHTML = brands.map(b => `
+    <tr>
+      <td><strong>${b.name}</strong></td>
+      <td><span class="badge badge-ig">IG</span></td>
+      <td>${fmt(b.igF)}</td>
+      <td>${fmt(b.igLikes)}</td>
+      <td>—</td>
+      <td>${b.igEng}%</td>
+      <td>~18/mo</td>
+    </tr>`).join('');
+}
+
+// ========= HISTORY =========
+function renderHistory() {
+  const brand = document.getElementById('history-brand')?.value || 'cch';
+  const months = appData[brand]?.months || {};
+  const keys = Object.keys(months).sort().reverse();
+  if (keys.length === 0) {
+    document.getElementById('history-list').innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:48px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">No scans yet — run your first scan to see history.</div>';
+    return;
+  }
+  document.getElementById('history-list').innerHTML = keys.map(k => {
+    const d = months[k];
+    const totalFollowers = (d?.ig?.followers||0)+(d?.fb?.followers||0)+(d?.tt?.followers||0);
+    const totalEng = (d?.ig?.likes||0)+(d?.ig?.comments||0)+(d?.fb?.reactions||0)+(d?.fb?.shares||0);
+    const scanned = d.scannedAt ? new Date(d.scannedAt).toLocaleDateString() : '—';
+    return `<div class="history-item" onclick="loadHistoricalMonth('${brand}','${k}')">
+      <div><div class="month-name">${k}</div><div class="month-sub">Scanned ${scanned}</div></div>
+      <div class="month-stats">
+        <div class="mstat"><div class="mstat-val">${fmt(totalFollowers)}</div><div class="mstat-label">Followers</div></div>
+        <div class="mstat"><div class="mstat-val">${fmt(totalEng)}</div><div class="mstat-label">Engagements</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadHistoricalMonth(brand, monthKey) {
+  const d = appData[brand].months[monthKey];
+  if (brand === 'cch') {
+    appData.cch.ig = d.ig; appData.cch.fb = d.fb; appData.cch.tt = d.tt;
+    renderCCHOverview(); renderCCHInstagram(); renderCCHFacebook(); renderCCHTikTok();
+    showToast('📅 Loaded ' + monthKey + ' data for CCH');
+    document.getElementById('page-date-range').textContent = 'Viewing historical data · ' + monthKey;
+  } else {
+    appData.cc.ig = d.ig; appData.cc.fb = d.fb;
+    renderCCOverview(); renderCCInstagram(); renderCCFacebook();
+    showToast('📅 Loaded ' + monthKey + ' data for Cloud Café');
+  }
+}
+
+function clearHistory() {
+  if (!confirm('Clear scan history?')) return;
+  const brand = document.getElementById('history-brand')?.value || 'cch';
+  appData[brand].months = {};
+  saveToStorage();
+  renderHistory();
+}
+
+// ========= EXPORT =========
+function exportExcel() {
+  if (!XLSX) { showToast('❌ Excel library not loaded'); return; }
+  const wb = XLSX.utils.book_new();
+  const cchIG = appData.cch.ig, cchFB = appData.cch.fb, cchTT = appData.cch.tt;
+  const ccIG = appData.cc.ig, ccFB = appData.cc.fb;
+  if (cchIG || cchFB || cchTT) {
+    const summary = [['Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Eng.Rate','Posts','Scan Date'],
+      cchIG ? ['CCH','Instagram',cchIG.followers,cchIG.likes,cchIG.comments,'—',cchIG.engRate+'%',cchIG.posts,new Date().toLocaleDateString()] : null,
+      cchFB ? ['CCH','Facebook',cchFB.followers,cchFB.reactions,cchFB.comments,cchFB.shares,cchFB.engRate+'%',cchFB.posts,new Date().toLocaleDateString()] : null,
+      cchTT ? ['CCH','TikTok',cchTT.followers,cchTT.likes,cchTT.comments,cchTT.shares,'—',cchTT.videos,new Date().toLocaleDateString()] : null,
+      ccIG ? ['Cloud Café','Instagram',ccIG.followers,ccIG.likes,ccIG.comments,'—',ccIG.engRate+'%',ccIG.posts,new Date().toLocaleDateString()] : null,
+      ccFB ? ['Cloud Café','Facebook',ccFB.followers,ccFB.reactions,ccFB.comments,ccFB.shares,ccFB.engRate+'%',ccFB.posts,new Date().toLocaleDateString()] : null,
+    ].filter(Boolean);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'Summary');
+  }
+  const historyRows = [['Month','Brand','IG Followers','FB Followers','TT Followers','Total Engagement','Posts','Eng.Rate']];
+  ['cch','cc'].forEach(brand => {
+    Object.entries(appData[brand]?.months||{}).sort().forEach(([k,d]) => {
+      historyRows.push([k, brand.toUpperCase(), d?.ig?.followers||0, d?.fb?.followers||0, d?.tt?.followers||0, (d?.ig?.likes||0)+(d?.fb?.reactions||0), (d?.ig?.posts||0)+(d?.fb?.posts||0)+(d?.tt?.videos||0), d?.ig?.engRate||'—']);
+    });
+  });
+  if (historyRows.length > 1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(historyRows), 'Monthly History');
+  XLSX.writeFile(wb, `SocialAnalytics_${getCurrentMonthKey()}.xlsx`);
+  showToast('✅ Excel exported!');
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'social_data.json'; a.click();
+  showToast('✅ JSON exported!');
+}
+
+async function pushToGsheet() {
+  const scriptUrl = appData.settings['gscript-url'];
+  const sheetId = document.getElementById('gsheet-id')?.value || appData.settings['gsheet-id-settings'];
+  if (!scriptUrl) { showToast('⚠ Set your Google Apps Script URL in Settings first'); closeModal('gsheet-modal'); return; }
+  showToast('⏳ Pushing to Google Sheets...');
+  try {
+    const payload = { sheetId, data: { cch: appData.cch, cc: appData.cc }, month: getCurrentMonthKey(), timestamp: new Date().toISOString() };
+    await fetch(scriptUrl, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    showToast('✅ Data pushed to Google Sheets!');
+    closeModal('gsheet-modal');
+  } catch(e) { showToast('❌ Could not push to Sheets — check Script URL'); }
+}
+
+async function testGsheet() {
+  const url = document.getElementById('gscript-url')?.value;
+  if (!url) { showToast('⚠ Enter your Apps Script URL first'); return; }
+  showToast('⏳ Testing connection...');
+  try {
+    await fetch(url + '?test=true', { mode: 'no-cors' });
+    showToast('✅ Connection test sent (check your Sheet for a test entry)');
+  } catch(e) { showToast('⚠ Could not reach script — check URL'); }
+}
+
+// ========= THEME =========
+function toggleTheme(btn) {
+  btn.classList.toggle('on');
+  document.body.classList.toggle('light-theme');
+  saveSettings();
+}
+
+// ========= RUN ALL =========
+async function startAllRuns() {
+  closeModal('run-modal');
+  if (document.getElementById('run-cch')?.checked) await runCCH();
+  if (document.getElementById('run-cc')?.checked) await runCC();
+  if (document.getElementById('run-comp')?.checked) await runCompetitors();
+}
+
+// ========= HELPERS =========
+function showStatus(brand, loading, msg, state) {
+  const el = document.getElementById(brand + '-status');
+  const dot = document.getElementById(brand + '-dot');
+  const txt = document.getElementById(brand + '-status-text');
+  if (!el) return;
+  el.style.display = 'block';
+  if (dot) dot.className = 'status-dot ' + (state || (loading ? 'running' : 'done'));
+  if (txt) txt.textContent = msg;
+}
+
+function setText(id, val) { const el = document.getElementById(id); if (el) el.innerHTML = String(val); }
+
+function fmt(n) {
+  n = Number(n);
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function delta(curr, prev) {
+  if (!prev) return '—';
+  const pct = ((curr - prev) / prev * 100).toFixed(1);
+  return (curr >= prev ? '+' : '') + pct + '%';
+}
+
+function getCurrentMonthKey() {
+  const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0');
+}
+function getPrevMonthKey() {
+  const n = new Date(new Date().setMonth(new Date().getMonth()-1));
+  return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+function clearAllData() {
+  appData = { cch: { ig: null, fb: null, tt: null, months: {} }, cc: { ig: null, fb: null, months: {} }, comp: {}, settings: appData.settings };
+  saveToStorage(); showToast('🗑 All data cleared');
+}
+
+function renderPostsTable(tableId, posts, platform) {
+  if (!posts || posts.length === 0) return;
+  const tbody = document.getElementById(tableId);
+  if (!tbody) return;
+  const perf = (likes) => likes > 200 ? '<span class="badge badge-good">Top</span>' : likes > 80 ? '<span class="badge" style="background:rgba(212,175,55,0.15);color:var(--gold)">Good</span>' : '<span class="badge badge-bad">Low</span>';
+  if (platform === 'ig') {
+    tbody.innerHTML = posts.map(p => `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td><span class="post-type-chip">${p.type||'photo'}</span></td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.saved||0)}</td><td>${((((p.likes||0)+(p.comments||0))/(appData.cch.ig?.followers||appData.cc.ig?.followers||1000))*100).toFixed(2)}%</td><td>${perf(p.likes||0)}</td></tr>`).join('');
+  } else if (platform === 'fb') {
+    tbody.innerHTML = posts.map(p => `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td><span class="post-type-chip">${p.type||'post'}</span></td><td>${fmt(p.likes||p.reactions||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>—</td><td>${perf(p.likes||p.reactions||0)}</td></tr>`).join('');
+  } else if (platform === 'tt') {
+    tbody.innerHTML = posts.map(p => `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td>${fmt(p.views||0)}</td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>${p.completion||'—'}%</td><td>${perf(p.likes||0)}</td></tr>`).join('');
+  }
+}
+
+function renderHashtags(elId, hashtags) {
+  const el = document.getElementById(elId); if (!el || !hashtags) return;
+  if (hashtags.length === 0) { el.innerHTML = '<span style="color:var(--muted);font-size:13px">No hashtag data available</span>'; return; }
+  el.innerHTML = hashtags.map(h => `<span style="background:var(--bg4);border:1px solid var(--border2);padding:4px 10px;border-radius:6px;font-size:12px;color:var(--tiktok)">${h}</span>`).join('');
+}
+
+// ========= CHARTS =========
+function drawChart(id, type, labels, data, colors, label, compare, compareData) {
+  const canvas = document.getElementById(id); if (!canvas) return;
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+  const datasets = [{ label: label||'', data, backgroundColor: type === 'line' ? 'transparent' : colors, borderColor: type === 'line' ? colors[0] : colors, borderWidth: type === 'line' ? 2 : 1, tension: 0.4, pointRadius: type === 'line' ? 3 : 0, fill: type === 'line' }];
+  if (compare && compareData) {
+    datasets.unshift({ label: 'Previous Month', data: compareData, backgroundColor: 'rgba(136,135,128,0.3)', borderColor: '#888780', borderWidth: 1 });
+  }
+  chartInstances[id] = new Chart(canvas, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: compare ? true : false, labels: { color: '#A0998F', font: { family: 'Poppins', size: 11 }, boxWidth: 10 } }, tooltip: { backgroundColor: '#1a1a1a', titleColor: '#F0EDE8', bodyColor: '#A0998F', borderColor: '#333', borderWidth: 1 } },
+      scales: type === 'doughnut' ? {} : {
+        x: { ticks: { color: '#A0998F', font: { family: 'Poppins', size: 11 } }, grid: { color: 'rgba(42,42,42,0.8)' } },
+        y: { ticks: { color: '#A0998F', font: { family: 'Poppins', size: 11 }, callback: v => fmt(v) }, grid: { color: 'rgba(42,42,42,0.8)' } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
