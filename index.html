@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-:root{--bg:#0a0a0a;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;--crimson:#8B1A1A;--crimson-light:#C0392B;--crimson-bright:#E74C3C;--gold:#D4AF37;--green:#2D5A27;--green-light:#4CAF50;--white:#F5F5F0;--muted:#888880;--border:#2a2a2a;--border2:#333333;--text:#F0EDE8;--text2:#A0998F;--insta:#E1306C;--tiktok:#69C9D0;--facebook:#1877F2;--ads:#FF6B2B;--font:'Poppins',sans-serif;--radius:12px;--radius-sm:8px;}
+:root{--bg:#0a0a0a;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;--crimson:#8B1A1A;--crimson-light:#C0392B;--crimson-bright:#E74C3C;--gold:#D4AF37;--green:#2D5A27;--green-light:#4CAF50;--white:#F5F5F0;--muted:#888880;--border:#2a2a2a;--border2:#333333;--text:#F0EDE8;--text2:#A0998F;--insta:#E1306C;--tiktok:#69C9D0;--facebook:#1877F2;--font:'Poppins',sans-serif;--radius:12px;--radius-sm:8px;}
 .light-theme{--bg:#F4F1EC;--bg2:#FFFFFF;--bg3:#EEEBE4;--bg4:#E5E0D8;--border:#D8D3CA;--border2:#C8C3BA;--text:#1A1714;--text2:#6B6560;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;}
@@ -31,7 +31,7 @@ nav{flex:1;padding:6px 0;}
 .nav-icon.ig{background:rgba(225,48,108,.2);color:var(--insta);}
 .nav-icon.tt{background:rgba(105,201,208,.2);color:var(--tiktok);}
 .nav-icon.fb{background:rgba(24,119,242,.2);color:var(--facebook);}
-.nav-icon.ads{background:rgba(255,107,43,.2);color:var(--ads);}
+
 .nav-icon.dash{background:rgba(139,26,26,.25);color:var(--crimson-bright);}
 .nav-icon.set{background:rgba(212,175,55,.2);color:var(--gold);}
 .nav-divider{height:1px;background:var(--border);margin:6px 14px;}
@@ -72,7 +72,7 @@ nav{flex:1;padding:6px 0;}
 .badge-ig{background:rgba(225,48,108,.15);color:var(--insta);}
 .badge-fb{background:rgba(24,119,242,.15);color:var(--facebook);}
 .badge-tt{background:rgba(105,201,208,.15);color:var(--tiktok);}
-.badge-ads{background:rgba(255,107,43,.15);color:var(--ads);}
+
 .badge-good{background:rgba(76,175,80,.15);color:var(--green-light);}
 .badge-bad{background:rgba(231,76,60,.15);color:var(--crimson-bright);}
 .badge-mid{background:rgba(212,175,55,.15);color:var(--gold);}
@@ -166,13 +166,11 @@ nav{flex:1;padding:6px 0;}
     <div class="nav-item" data-page="cch-instagram" onclick="showPage(this)"><span class="nav-icon ig">IG</span><span>Instagram</span></div>
     <div class="nav-item" data-page="cch-facebook" onclick="showPage(this)"><span class="nav-icon fb">FB</span><span>Facebook</span></div>
     <div class="nav-item" data-page="cch-tiktok" onclick="showPage(this)"><span class="nav-icon tt">TT</span><span>TikTok</span></div>
-    <div class="nav-item" data-page="cch-ads" onclick="showPage(this)"><span class="nav-icon ads">AD</span><span>FB Ads</span></div>
     <div class="nav-divider"></div>
     <div class="nav-section">Cloud Café</div>
     <div class="nav-item" data-page="cc-overview" onclick="showPage(this)"><span class="nav-icon dash">◈</span><span>Overview</span></div>
     <div class="nav-item" data-page="cc-instagram" onclick="showPage(this)"><span class="nav-icon ig">IG</span><span>Instagram</span></div>
     <div class="nav-item" data-page="cc-facebook" onclick="showPage(this)"><span class="nav-icon fb">FB</span><span>Facebook</span></div>
-    <div class="nav-item" data-page="cc-ads" onclick="showPage(this)"><span class="nav-icon ads">AD</span><span>FB Ads</span></div>
     <div class="nav-divider"></div>
     <div class="nav-section">Analysis</div>
     <div class="nav-item" data-page="comparison" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(212,175,55,.15);color:var(--gold)">↔</span><span>Compare</span></div>
@@ -339,40 +337,6 @@ nav{flex:1;padding:6px 0;}
     </div>
   </div>
 
-  <!-- CCH ADS -->
-  <div class="page" id="page-cch-ads">
-    <div class="run-box" style="border-left:3px solid var(--ads)">
-      <h3><span class="badge badge-ads">AD</span> CCH — Facebook Ads Library</h3>
-      <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Uses <code style="color:var(--ads)">apify/facebook-ads-scraper</code> actor. Run only if credits remain after main scans.</p>
-      <div class="input-row">
-        <div class="input-group"><label>Ads Dataset ID</label><input type="text" id="cch-ads-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
-        <div class="input-group" style="display:flex;align-items:flex-end;gap:8px">
-          <button class="btn" style="flex:1;background:rgba(255,107,43,.15);border-color:var(--ads);color:var(--ads);padding:9px" onclick="runAds('cch')">▶ Fetch CCH Ads</button>
-          <button class="btn" onclick="loadDemoData('cch-ads')">Demo</button>
-        </div>
-      </div>
-      <div id="cch-ads-status" style="display:none;margin-top:10px">
-        <div style="font-size:11px;color:var(--muted)"><span class="status-dot running" id="cch-ads-dot"></span><span id="cch-ads-status-text">Fetching ads data...</span></div>
-        <div class="loading-bar"><div class="loading-bar-fill"></div></div>
-      </div>
-    </div>
-    <div class="grid-4 mb-22">
-      <div class="card"><div class="card-title">Active Ads</div><div class="card-value" id="cch-ads-active">—</div></div>
-      <div class="card"><div class="card-title">Total Ads Found</div><div class="card-value" id="cch-ads-total">—</div></div>
-      <div class="card"><div class="card-title">Ad Formats</div><div class="card-value" id="cch-ads-formats">—</div></div>
-      <div class="card"><div class="card-title">Avg Est. Reach</div><div class="card-value" id="cch-ads-reach">—</div></div>
-    </div>
-    <div class="grid-2 mb-22">
-      <div class="card"><div class="section-head"><div class="section-title">Ad Type Distribution</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-ads-type-chart"></canvas></div></div>
-      <div class="card"><div class="section-head"><div class="section-title">Ads Timeline</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-ads-timeline-chart"></canvas></div></div>
-    </div>
-    <div class="card mb-22">
-      <div class="section-head"><div class="section-title">All Active Ads</div></div>
-      <table class="data-table"><thead><tr><th>Ad Copy (excerpt)</th><th>Format</th><th>Status</th><th>Est. Reach</th><th>Start Date</th><th>Platforms</th><th>CTA</th></tr></thead>
-      <tbody id="cch-ads-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No ads data — run fetch or load demo</td></tr></tbody></table>
-    </div>
-  </div>
-
   <!-- CLOUD CAFE OVERVIEW -->
   <div class="page" id="page-cc-overview">
     <div class="run-box" style="border-left:3px solid var(--gold)">
@@ -468,32 +432,6 @@ nav{flex:1;padding:6px 0;}
       <div class="section-head"><div class="section-title">All Facebook Posts — Selected Period</div></div>
       <table class="data-table"><thead><tr><th>Post Excerpt</th><th>Type</th><th>Date</th><th>Reactions</th><th>Comments</th><th>Shares</th><th>Rating</th></tr></thead>
       <tbody id="cc-fb-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
-    </div>
-  </div>
-
-  <!-- CC ADS -->
-  <div class="page" id="page-cc-ads">
-    <div class="run-box" style="border-left:3px solid var(--ads)">
-      <h3><span class="badge badge-ads">AD</span> Cloud Café — Facebook Ads Library</h3>
-      <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Run only if credits remain. Uses <code style="color:var(--ads)">apify/facebook-ads-scraper</code>.</p>
-      <div class="input-row">
-        <div class="input-group"><label>Ads Dataset ID</label><input type="text" id="cc-ads-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
-        <div class="input-group" style="display:flex;align-items:flex-end;gap:8px">
-          <button class="btn" style="flex:1;background:rgba(255,107,43,.15);border-color:var(--ads);color:var(--ads);padding:9px" onclick="runAds('cc')">▶ Fetch Cloud Café Ads</button>
-          <button class="btn" onclick="loadDemoData('cc-ads')">Demo</button>
-        </div>
-      </div>
-    </div>
-    <div class="grid-4 mb-22">
-      <div class="card"><div class="card-title">Active Ads</div><div class="card-value" id="cc-ads-active">—</div></div>
-      <div class="card"><div class="card-title">Total Ads Found</div><div class="card-value" id="cc-ads-total">—</div></div>
-      <div class="card"><div class="card-title">Ad Formats</div><div class="card-value" id="cc-ads-formats">—</div></div>
-      <div class="card"><div class="card-title">Avg Est. Reach</div><div class="card-value" id="cc-ads-reach">—</div></div>
-    </div>
-    <div class="card mb-22">
-      <div class="section-head"><div class="section-title">All Active Ads</div></div>
-      <table class="data-table"><thead><tr><th>Ad Copy (excerpt)</th><th>Format</th><th>Status</th><th>Est. Reach</th><th>Start Date</th><th>CTA</th></tr></thead>
-      <tbody id="cc-ads-table"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No ads data — run fetch or load demo</td></tr></tbody></table>
     </div>
   </div>
 
@@ -677,12 +615,38 @@ nav{flex:1;padding:6px 0;}
 </div>
 <div class="modal-overlay" id="gsheet-modal">
   <div class="modal">
-    <h3>⇪ Google Sheets Setup <button class="modal-close" onclick="closeModal('gsheet-modal')">×</button></h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Set up your Apps Script URL in Settings first. Data will be pushed as a clean structured table.</p>
-    <div class="input-group"><label>Apps Script URL</label><input type="text" id="gsheet-url-modal" placeholder="https://script.google.com/macros/s/.../exec"></div>
-    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px;margin:12px 0;font-size:11px;color:var(--muted)">📋 Each push writes one row per platform per brand with all metrics cleanly separated into columns. Columns: Month, Brand, Platform, Followers, Likes, Comments, Shares, Posts, Eng.Rate, Date.</div>
+    <h3>⇪ Google Sheets Sync <button class="modal-close" onclick="closeModal('gsheet-modal')">×</button></h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Each push writes one clean row per platform into your Sheet. Set up the Apps Script once and it works every month.</p>
+    <div class="input-group"><label>Apps Script Web App URL</label><input type="text" id="gsheet-url-modal" placeholder="https://script.google.com/macros/s/.../exec" oninput="document.getElementById('gscript-url').value=this.value;saveSettings()"></div>
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin:12px 0;font-size:11px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--gold);display:block;margin-bottom:8px">📋 Apps Script setup (do this once):</strong>
+      1. Open your Google Sheet → Extensions → Apps Script<br>
+      2. Delete all default code, paste the script below, click Save<br>
+      3. Click Deploy → New Deployment → Web App<br>
+      4. Execute as: <strong style="color:var(--text)">Me</strong> · Who has access: <strong style="color:var(--text)">Anyone</strong><br>
+      5. Click Deploy → Authorize → copy the Web App URL → paste above<br><br>
+      <strong style="color:var(--gold)">Apps Script code to paste:</strong>
+      <div style="background:var(--bg2);border-radius:4px;padding:10px;margin-top:6px;font-family:monospace;font-size:10px;color:var(--green-light);overflow-x:auto;white-space:pre">function doPost(e){
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  var sheet=ss.getSheetByName('SocialData');
+  if(!sheet)sheet=ss.insertSheet('SocialData');
+  var payload=JSON.parse(e.postData.contents);
+  if(sheet.getLastRow()===0){
+    sheet.appendRow(payload.headers);
+    var hRange=sheet.getRange(1,1,1,payload.headers.length);
+    hRange.setBackground('#1a1a1a');
+    hRange.setFontColor('#D4AF37');
+    hRange.setFontWeight('bold');
+  }
+  payload.rows.forEach(function(row){sheet.appendRow(row);});
+  return ContentService
+    .createTextOutput(JSON.stringify({status:'ok',rows:payload.rows.length}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+    </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="pushToGsheet(false)">Push Now</button>
+      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="pushToGsheet(false)">Push Data Now</button>
+      <button class="btn" onclick="testGsheet()">Send Test Row</button>
       <button class="btn" onclick="closeModal('gsheet-modal')">Cancel</button>
     </div>
   </div>
@@ -702,7 +666,7 @@ nav{flex:1;padding:6px 0;}
   </div>
 </div>
 <div id="toast"></div>
-<div style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(212,175,55,0.5);letter-spacing:2px;text-transform:uppercase;pointer-events:none">Created by Shazwan</div>
+
 
 <script>
 // ===== STATE =====
@@ -740,8 +704,6 @@ function buildCompInputs(){
 function renderIfDataExists(){
   if(appData.cch.ig||appData.cch.fb||appData.cch.tt){renderCCHOverview();renderCCHInstagram();renderCCHFacebook();renderCCHTikTok();}
   if(appData.cc.ig||appData.cc.fb){renderCCOverview();renderCCInstagram();renderCCFacebook();}
-  if(appData.cch.ads)renderAds('cch');
-  if(appData.cc.ads)renderAds('cc');
   if(appData.comp.c1||appData.comp.c2||appData.comp.c3||appData.comp.c4)renderCompetitors();
 }
 
@@ -755,13 +717,26 @@ function setDefaultDates(){
 }
 
 function loadFromStorage(){
-  try{const s=localStorage.getItem('sma_v2');if(s)appData=JSON.parse(s);}catch(e){}
+  try{
+    // Try current key first
+    let s=localStorage.getItem('sma_v2');
+    // Fall back to old v1 key if nothing in v2
+    if(!s)s=localStorage.getItem('sma_data');
+    if(s){
+      const parsed=JSON.parse(s);
+      // Merge carefully — preserve defaults for any missing keys
+      if(parsed.cch)appData.cch={...appData.cch,...parsed.cch};
+      if(parsed.cc)appData.cc={...appData.cc,...parsed.cc};
+      if(parsed.comp)appData.comp={...appData.comp,...parsed.comp};
+      if(parsed.settings)appData.settings={...appData.settings,...parsed.settings};
+    }
+  }catch(e){console.warn('Storage load error:',e);}
 }
 function saveToStorage(){
   try{localStorage.setItem('sma_v2',JSON.stringify(appData));}catch(e){showToast('⚠ Storage full — export data to avoid loss');}
 }
 function saveSettings(){
-  const ids=['cch-api-token','cch-ig-dataset','cch-fb-dataset','cch-tt-dataset','cch-ads-dataset','cc-api-token','cc-ig-dataset','cc-fb-dataset','cc-ads-dataset','gscript-url','actor-ig','actor-fb','actor-tt','actor-ads'];
+  const ids=['cch-api-token','cch-ig-dataset','cch-fb-dataset','cch-tt-dataset','cc-api-token','cc-ig-dataset','cc-fb-dataset','gscript-url','actor-ig','actor-fb','actor-tt'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)appData.settings[id]=el.value;});
   [1,2,3,4].forEach(i=>{
     ['name','ig-dataset','fb-dataset','ig-handle'].forEach(f=>{
@@ -782,7 +757,7 @@ function showPage(el){
   el.classList.add('active');
   const p=document.getElementById('page-'+el.dataset.page);
   if(p)p.classList.add('active');
-  const titles={'cch-overview':'CCH — Overview','cch-instagram':'CCH — Instagram','cch-facebook':'CCH — Facebook','cch-tiktok':'CCH — TikTok','cch-ads':'CCH — Facebook Ads','cc-overview':'Cloud Café — Overview','cc-instagram':'Cloud Café — Instagram','cc-facebook':'Cloud Café — Facebook','cc-ads':'Cloud Café — Facebook Ads','comparison':'Month-over-Month Comparison','yearly':'Yearly Performance','competitors':'Competitor Analysis','history':'Scan History','settings':'Settings'};
+  const titles={'cch-overview':'CCH — Overview','cch-instagram':'CCH — Instagram','cch-facebook':'CCH — Facebook','cch-tiktok':'CCH — TikTok','cc-overview':'Cloud Café — Overview','cc-instagram':'Cloud Café — Instagram','cc-facebook':'Cloud Café — Facebook','comparison':'Month-over-Month Comparison','yearly':'Yearly Performance','competitors':'Competitor Analysis','history':'Scan History','settings':'Settings'};
   document.getElementById('page-title').textContent=titles[el.dataset.page]||el.dataset.page;
   if(el.dataset.page==='comparison')renderComparison();
   if(el.dataset.page==='yearly')renderYearly();
@@ -817,12 +792,30 @@ async function fetchApifyCredits(token){
     const r=await fetch(`https://api.apify.com/v2/users/me?token=${token}`);
     if(!r.ok)return null;
     const d=await r.json();
-    const used=d.data?.monthlyUsage?.creditsUsed||0;
-    const remaining=Math.max(0,5-used);
+    // Apify API returns usage under different paths depending on account type
+    const used=d.data?.plan?.monthlyUsage?.creditsUsed
+      ||d.data?.monthlyUsage?.creditsUsed
+      ||d.data?.usageCycle?.totalCostUsd
+      ||0;
+    const limit=d.data?.plan?.monthlyUsageCredits
+      ||d.data?.plan?.maxMonthlyUsage
+      ||5;
+    const remaining=Math.max(0,limit-used);
     appData.settings.creditsRemaining=remaining;
+    appData.settings.creditsLimit=limit;
     saveToStorage();
+    updateCreditsUI(remaining,limit);
     return remaining;
-  }catch(e){return null;}
+  }catch(e){console.warn('Credits fetch error:',e);return null;}
+}
+function updateCreditsUI(remaining,limit){
+  limit=limit||appData.settings.creditsLimit||5;
+  remaining=parseFloat(remaining)||parseFloat(appData.settings.creditsRemaining)||5;
+  const pct=Math.max(0,Math.min(100,(remaining/limit)*100));
+  document.getElementById('credits-display').textContent='$'+remaining.toFixed(2);
+  const bar=document.getElementById('credits-bar-fill');
+  bar.style.width=pct+'%';
+  bar.style.background=remaining>limit*0.4?'var(--gold)':remaining>limit*0.2?'#E67E22':'var(--crimson-bright)';
 }
 function updateCreditsUI(remaining){
   remaining=parseFloat(remaining)||5;
@@ -873,118 +866,304 @@ function strictFilterByDate(items,getTsFn,from,to){
 
 function processIGData(raw,from,to){
   if(!raw||!Array.isArray(raw)||raw.length===0)return null;
-  const profileRow=raw.find(r=>r.followersCount!==undefined||r.followedByCount!==undefined||r.edge_followed_by);
-  const followers=profileRow?.followersCount||profileRow?.followedByCount||profileRow?.edge_followed_by?.count||0;
-  const allPosts=raw.filter(p=>{
-    if(p.followersCount!==undefined||p.followedByCount!==undefined)return false;
-    return p.likesCount!==undefined||p.like_count!==undefined||p.edge_liked_by!==undefined||p.diggCount!==undefined;
+
+  // ── STEP 1: Extract follower count ──────────────────────────────────
+  // Apify returns follower data in many formats depending on actor version.
+  // We scan the ENTIRE raw array and take the highest value found.
+  let followers=0;
+  raw.forEach(item=>{
+    const candidates=[
+      item.followersCount, item.followedByCount,
+      item.edge_followed_by?.count,
+      item.owner?.edge_followed_by?.count,
+      item.user?.edge_followed_by?.count,
+      item.graphql?.user?.edge_followed_by?.count,
+      item.data?.user?.edge_followed_by?.count,
+      item.authorMeta?.fans,
+      item.ownerFullName ? undefined : item.fans, // only if looks like profile
+      item.subscriberCount,
+    ];
+    candidates.forEach(v=>{ if(typeof v==='number'&&v>followers)followers=v; });
   });
-  // STRICT: only posts within date range — no fallback
-  const posts=strictFilterByDate(allPosts,p=>p.timestamp||p.taken_at_timestamp||p.takenAt||p.taken_at||p.date,from,to);
-  if(posts.length===0&&(from||to))console.warn(`IG: 0 posts in range ${from?.toDateString()}–${to?.toDateString()}. Total available: ${allPosts.length}`);
-  const getLikes=p=>p.likesCount||p.like_count||p.edge_liked_by?.count||0;
+
+  // ── STEP 2: Identify posts (items that have engagement data) ─────────
+  const allPosts=raw.filter(item=>{
+    // Must have some engagement field
+    const hasEng=item.likesCount!==undefined
+      ||item.like_count!==undefined
+      ||item.edge_liked_by!==undefined
+      ||item.diggCount!==undefined
+      ||item.videoPlayCount!==undefined;
+    if(!hasEng)return false;
+    // Skip pure profile rows that have followerCount but no likes
+    if((item.followersCount||item.followedByCount)&&item.likesCount===undefined&&item.like_count===undefined)return false;
+    return true;
+  });
+
+  // ── STEP 3: Strict date filter ───────────────────────────────────────
+  const getTs=p=>{
+    const raw=p.timestamp||p.taken_at_timestamp||p.takenAt||p.taken_at||p.date||p.shortCode;
+    if(!raw)return null;
+    if(typeof raw==='number')return raw<9999999999?raw*1000:raw;
+    return raw;
+  };
+  const posts=(from||to)?allPosts.filter(p=>{
+    const ts=getTs(p);
+    if(!ts)return false; // no timestamp → exclude when range is set
+    const d=new Date(ts);
+    if(isNaN(d))return false;
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  }):allPosts;
+
+  if(posts.length===0&&(from||to)){
+    console.warn(`IG: 0 posts in date range. ${allPosts.length} total available. Check timestamps in your dataset.`);
+  }
+
+  // ── STEP 4: Metric extractors ────────────────────────────────────────
+  const getLikes=p=>p.likesCount||p.like_count||p.edge_liked_by?.count||p.diggCount||0;
   const getComments=p=>p.commentsCount||p.comment_count||p.edge_media_to_comment?.count||0;
+  const getSaved=p=>p.videoViewCount||0;
+
   const totalLikes=posts.reduce((s,p)=>s+getLikes(p),0);
   const totalComments=posts.reduce((s,p)=>s+getComments(p),0);
-  const engRate=followers>0&&posts.length>0?parseFloat(((totalLikes+totalComments)/(followers*posts.length)*100).toFixed(2)):0;
-  const photoCount=posts.filter(p=>!p.videoUrl&&!p.is_video&&p.type!=='Video'&&p.__typename!=='GraphVideo').length;
-  const reelCount=posts.filter(p=>p.videoUrl||p.is_video||p.type==='Video'||p.__typename==='GraphVideo').length;
-  const topPosts=[...posts].sort((a,b)=>getLikes(b)-getLikes(a)).slice(0,20).map(p=>{
-    const ts=p.timestamp||p.taken_at_timestamp||p.takenAt||p.taken_at;
-    const dateStr=ts?new Date(typeof ts==='number'&&ts<9999999999?ts*1000:ts).toLocaleDateString():'—';
-    return{caption:(p.caption||p.alt||'').substring(0,60),type:p.videoUrl||p.is_video?'reel':'photo',likes:getLikes(p),comments:getComments(p),saved:0,date:dateStr};
-  });
-  // day-of-week timing
-  const timing={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
+
+  // ── STEP 5: Engagement rate ──────────────────────────────────────────
+  // Correct formula: (total likes + total comments) / followers × 100
+  // This gives overall eng rate for the period, NOT per-post.
+  // Industry standard: total engagement ÷ followers.
+  const engRate=followers>0
+    ? parseFloat(((totalLikes+totalComments)/followers*100).toFixed(2))
+    : 0;
+
+  // ── STEP 6: Post type detection ───────────────────────────────────────
+  const isVideo=p=>!!(p.videoUrl||p.is_video||p.type==='Video'||p.__typename==='GraphVideo'||p.videoPlayCount);
+  const isCarousel=p=>p.type==='Sidecar'||p.__typename==='GraphSidecar'||p.childPosts?.length>0;
+  const photoCount=posts.filter(p=>!isVideo(p)&&!isCarousel(p)).length;
+  const reelCount=posts.filter(p=>isVideo(p)).length;
+  const carouselCount=posts.filter(p=>isCarousel(p)).length;
+
+  // ── STEP 7: Build top posts sorted BY DATE (newest first) ────────────
+  const topPosts=[...posts]
+    .sort((a,b)=>{
+      const ta=new Date(getTs(a)||0).getTime();
+      const tb=new Date(getTs(b)||0).getTime();
+      return tb-ta; // newest first
+    })
+    .slice(0,30)
+    .map(p=>{
+      const ts=getTs(p);
+      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      return{
+        caption:(p.caption||p.alt||p.text||'').substring(0,60),
+        type:isCarousel(p)?'carousel':isVideo(p)?'reel':'photo',
+        likes:getLikes(p),comments:getComments(p),saved:getSaved(p),
+        date:dateStr,
+        _ts:ts?new Date(ts).getTime():0
+      };
+    });
+
+  // ── STEP 8: Timing & heatmap ─────────────────────────────────────────
   const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  // heatmap: 7 days × 24 hours grid of engagement
+  const timing={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
   const heatmap=Array.from({length:7},()=>Array(24).fill(0));
   posts.forEach(p=>{
-    const ts=p.timestamp||p.takenAt||p.taken_at;
-    if(!ts)return;
-    const d=new Date(typeof ts==='number'&&ts<9999999999?ts*1000:ts);
-    if(isNaN(d))return;
-    timing[dayNames[d.getDay()]]++;
+    const ts=getTs(p);if(!ts)return;
+    const d=new Date(ts);if(isNaN(d))return;
+    timing[dayNames[d.getDay()]]=(timing[dayNames[d.getDay()]]||0)+1;
     heatmap[d.getDay()][d.getHours()]+=getLikes(p)+getComments(p);
   });
-  const hashtags=[];
-  posts.forEach(p=>{const cap=p.caption||'';const tags=cap.match(/#\w+/g)||[];tags.forEach(t=>{if(!hashtags.includes(t)&&hashtags.length<20)hashtags.push(t);});});
-  const timeline=buildTimeline(posts.map(p=>{const ts=p.timestamp||p.takenAt;return{date:ts?new Date(typeof ts==='number'&&ts<9999999999?ts*1000:ts):null,val:getLikes(p)+getComments(p)};}));
-  return{followers,posts:posts.length,likes:totalLikes,comments:totalComments,saved:0,engRate,topPosts,hashtags,demographics:{female:58,male:42},postTypes:{photo:photoCount,reel:reelCount,carousel:0},timing,heatmap,timeline,filteredCount:posts.length,totalAvailable:allPosts.length};
+
+  // ── STEP 9: Hashtags ─────────────────────────────────────────────────
+  const hashMap={};
+  posts.forEach(p=>{
+    (p.caption||'').match(/#\w+/g)?.forEach(t=>{hashMap[t]=(hashMap[t]||0)+getLikes(p);});
+  });
+  const hashtags=Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+
+  // ── STEP 10: Timeline ─────────────────────────────────────────────────
+  const timeline=buildTimeline(posts.map(p=>{
+    const ts=getTs(p);
+    return{date:ts?new Date(ts):null,val:getLikes(p)+getComments(p)};
+  }));
+
+  return{
+    followers,posts:posts.length,likes:totalLikes,comments:totalComments,saved:0,engRate,
+    topPosts,hashtags,demographics:{female:58,male:42},
+    postTypes:{photo:photoCount,reel:reelCount,carousel:carouselCount},
+    timing,heatmap,timeline,
+    filteredCount:posts.length,totalAvailable:allPosts.length
+  };
 }
 
 function processFBData(raw,from,to){
   if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+
+  // ── STEP 1: Extract followers ────────────────────────────────────────
   let followers=0;
-  const pageRow=raw.find(r=>r.pageLikes!==undefined||r.pageFollowers!==undefined||r.fans!==undefined||(r.likesCount!==undefined&&r.text===undefined));
-  if(pageRow)followers=pageRow.pageLikes||pageRow.pageFollowers||pageRow.fans||pageRow.likesCount||0;
-  const allPosts=raw.filter(p=>p.text!==undefined||p.message!==undefined||p.story!==undefined);
-  // STRICT: only posts within date range — no fallback
-  const posts=strictFilterByDate(allPosts,p=>p.time||p.created_time||p.timestamp||p.date,from,to);
-  if(posts.length===0&&(from||to))console.warn(`FB: 0 posts in range. Total available: ${allPosts.length}`);
-  const getR=p=>p.reactionsCount||p.likes||p.reactions||0;
+  raw.forEach(item=>{
+    const candidates=[
+      item.pageLikes, item.pageFollowers, item.fans,
+      item.likesCount, item.followersCount,
+      item.page?.likes, item.page?.followers,
+    ];
+    candidates.forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+  });
+
+  // ── STEP 2: Identify post items ──────────────────────────────────────
+  const allPosts=raw.filter(p=>{
+    const hasText=p.text!==undefined||p.message!==undefined||p.story!==undefined;
+    const hasEng=p.reactionsCount!==undefined||p.likes!==undefined||p.reactions!==undefined||p.commentsCount!==undefined;
+    return hasText||hasEng;
+  });
+
+  // ── STEP 3: Strict date filter ───────────────────────────────────────
+  const getTs=p=>p.time||p.created_time||p.timestamp||p.date||p.createdTime;
+  const posts=(from||to)?allPosts.filter(p=>{
+    const ts=getTs(p);
+    if(!ts)return false;
+    const d=new Date(ts);
+    if(isNaN(d))return false;
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  }):allPosts;
+
+  if(posts.length===0&&(from||to))console.warn(`FB: 0 posts in date range. ${allPosts.length} total available.`);
+
+  // ── STEP 4: Metrics ──────────────────────────────────────────────────
+  const getR=p=>p.reactionsCount||p.likesCount||p.likes||p.reactions||0;
   const getC=p=>p.commentsCount||p.comments||0;
   const getS=p=>p.sharesCount||p.shares||0;
+
   const totalReactions=posts.reduce((s,p)=>s+getR(p),0);
   const totalComments=posts.reduce((s,p)=>s+getC(p),0);
   const totalShares=posts.reduce((s,p)=>s+getS(p),0);
-  const engRate=followers>0&&posts.length>0?parseFloat(((totalReactions+totalComments)/(followers*posts.length)*100).toFixed(2)):0;
-  const topPosts=[...posts].sort((a,b)=>getR(b)-getR(a)).slice(0,20).map(p=>{
-    const ts=p.time||p.created_time||p.timestamp||p.date;
-    const dateStr=ts?new Date(ts).toLocaleDateString():'—';
-    return{caption:(p.text||p.message||p.story||'').substring(0,60),type:p.video?'video':'post',reactions:getR(p),comments:getC(p),shares:getS(p),date:dateStr};
-  });
+
+  // Correct eng rate: total engagement ÷ followers
+  const engRate=followers>0
+    ? parseFloat(((totalReactions+totalComments)/followers*100).toFixed(2))
+    : 0;
+
+  // ── STEP 5: Posts sorted by date (newest first) ──────────────────────
+  const topPosts=[...posts]
+    .sort((a,b)=>{
+      const ta=new Date(getTs(a)||0).getTime();
+      const tb=new Date(getTs(b)||0).getTime();
+      return tb-ta;
+    })
+    .slice(0,30)
+    .map(p=>{
+      const ts=getTs(p);
+      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      return{
+        caption:(p.text||p.message||p.story||p.storyTitle||'').substring(0,60),
+        type:p.videoUrl||p.attachments?.[0]?.type==='video'?'video':'post',
+        reactions:getR(p),comments:getC(p),shares:getS(p),date:dateStr
+      };
+    });
+
   const totalR=totalReactions||1;
-  const reactionTypes={like:Math.floor(totalR*.45),love:Math.floor(totalR*.35),wow:Math.floor(totalR*.1),haha:Math.floor(totalR*.07),sad:Math.floor(totalR*.02),angry:Math.floor(totalR*.01)};
-  // heatmap: 7 days × 24 hours
+  const reactionTypes={
+    like:Math.floor(totalR*.45),love:Math.floor(totalR*.35),
+    wow:Math.floor(totalR*.1),haha:Math.floor(totalR*.07),
+    sad:Math.floor(totalR*.02),angry:Math.floor(totalR*.01)
+  };
+
+  // ── STEP 6: Heatmap ──────────────────────────────────────────────────
   const heatmap=Array.from({length:7},()=>Array(24).fill(0));
   posts.forEach(p=>{
-    const ts=p.time||p.created_time||p.timestamp;
-    if(!ts)return;
+    const ts=getTs(p);if(!ts)return;
     const d=new Date(ts);if(isNaN(d))return;
     heatmap[d.getDay()][d.getHours()]+=getR(p)+getC(p);
   });
-  const timeline=buildTimeline(posts.map(p=>{const ts=p.time||p.created_time||p.timestamp;return{date:ts?new Date(ts):null,val:getR(p)+getC(p)};}));
-  return{followers,posts:posts.length,reactions:totalReactions,comments:totalComments,shares:totalShares,engRate,topPosts,reactionTypes,heatmap,timeline,filteredCount:posts.length,totalAvailable:allPosts.length};
+
+  const timeline=buildTimeline(posts.map(p=>{
+    const ts=getTs(p);
+    return{date:ts?new Date(ts):null,val:getR(p)+getC(p)};
+  }));
+
+  return{
+    followers,posts:posts.length,reactions:totalReactions,
+    comments:totalComments,shares:totalShares,engRate,
+    topPosts,reactionTypes,heatmap,timeline,
+    filteredCount:posts.length,totalAvailable:allPosts.length
+  };
 }
 
 function processTTData(raw,from,to){
   if(!raw||!Array.isArray(raw)||raw.length===0)return null;
-  const profileRow=raw.find(r=>r.followerCount!==undefined||r.authorMeta?.fans!==undefined);
-  const followers=profileRow?.followerCount||profileRow?.authorMeta?.fans||profileRow?.stats?.followerCount||0;
-  const allVideos=raw.filter(v=>v.playCount!==undefined||v.diggCount!==undefined||v.statsV2!==undefined);
-  // STRICT: only videos within date range — no fallback
-  const videos=strictFilterByDate(allVideos,v=>v.createTime||v.createTimeISO,from,to);
-  if(videos.length===0&&(from||to))console.warn(`TT: 0 videos in range. Total available: ${allVideos.length}`);
+
+  // ── STEP 1: Extract followers ────────────────────────────────────────
+  let followers=0;
+  raw.forEach(item=>{
+    const candidates=[
+      item.followerCount,
+      item.authorMeta?.fans,
+      item.stats?.followerCount,
+      item.authorStats?.followerCount,
+      item.author?.stats?.followerCount,
+    ];
+    candidates.forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+  });
+
+  // ── STEP 2: Identify videos ──────────────────────────────────────────
+  const allVideos=raw.filter(v=>
+    v.playCount!==undefined||v.diggCount!==undefined||
+    v.statsV2!==undefined||v.stats?.playCount!==undefined
+  );
+
+  // ── STEP 3: Strict date filter ───────────────────────────────────────
+  const getTs=v=>{
+    const raw=v.createTime||v.createTimeISO||v.created_at;
+    if(!raw)return null;
+    if(typeof raw==='number')return raw<9999999999?raw*1000:raw;
+    return raw;
+  };
+  const videos=(from||to)?allVideos.filter(v=>{
+    const ts=getTs(v);
+    if(!ts)return false;
+    const d=new Date(ts);
+    if(isNaN(d))return false;
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  }):allVideos;
+
+  if(videos.length===0&&(from||to))console.warn(`TT: 0 videos in date range. ${allVideos.length} total available.`);
+
+  // ── STEP 4: Metrics ──────────────────────────────────────────────────
   const getViews=v=>v.playCount||v.statsV2?.playCount||v.stats?.playCount||0;
   const getLikes=v=>v.diggCount||v.statsV2?.diggCount||v.stats?.diggCount||0;
   const getComments=v=>v.commentCount||v.statsV2?.commentCount||v.stats?.commentCount||0;
   const getShares=v=>v.shareCount||v.statsV2?.shareCount||v.stats?.shareCount||0;
+
   const totalViews=videos.reduce((s,v)=>s+getViews(v),0);
   const totalLikes=videos.reduce((s,v)=>s+getLikes(v),0);
   const totalComments=videos.reduce((s,v)=>s+getComments(v),0);
   const totalShares=videos.reduce((s,v)=>s+getShares(v),0);
-  const topPosts=[...videos].sort((a,b)=>getViews(b)-getViews(a)).slice(0,20).map(v=>{
-    const ts=v.createTime||v.createTimeISO;
-    const dateStr=ts?new Date(typeof ts==='number'?ts*1000:ts).toLocaleDateString():'—';
-    return{caption:(v.text||v.desc||'').substring(0,60),views:getViews(v),likes:getLikes(v),comments:getComments(v),shares:getShares(v),completion:Math.floor(Math.random()*40+25),date:dateStr};
-  });
-  return{followers,videos:videos.length,views:totalViews,likes:totalLikes,comments:totalComments,shares:totalShares,avgDuration:25,topPosts};
-}
 
-function processAdsData(raw){
-  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
-  const ads=raw.filter(a=>a.adArchiveID||a.id||a.ad_creative_bodies);
-  const getText=a=>a.adCreativeLinkCaption||a.ad_creative_bodies?.[0]||a.pageAbout?.description||a.snapshot?.body?.markup||'(no text)';
-  const getStatus=a=>a.isActive?'Active':a.endDate?'Ended':'Unknown';
-  const getFormat=a=>a.snapshot?.videos?.length>0?'Video':a.snapshot?.images?.length>1?'Carousel':'Image';
-  return{
-    active:ads.filter(a=>a.isActive).length,
-    total:ads.length,
-    formats:[...new Set(ads.map(a=>getFormat(a)))].join(', ')||'Mixed',
-    estReach:'N/A',
-    topAds:ads.slice(0,15).map(a=>({text:getText(a).substring(0,70),format:getFormat(a),status:getStatus(a),reach:a.reachEstimate?.lowerBound?`${a.reachEstimate.lowerBound}–${a.reachEstimate.upperBound}`:'N/A',startDate:a.startDate?new Date(a.startDate*1000).toLocaleDateString():'—',platforms:(a.publisherPlatform||['facebook']).join(', '),cta:a.snapshot?.cta_type||'—'}))
-  };
+  // ── STEP 5: Videos sorted by date (newest first) ─────────────────────
+  const topPosts=[...videos]
+    .sort((a,b)=>{
+      const ta=new Date(getTs(a)||0).getTime();
+      const tb=new Date(getTs(b)||0).getTime();
+      return tb-ta;
+    })
+    .slice(0,30)
+    .map(v=>{
+      const ts=getTs(v);
+      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      return{
+        caption:(v.text||v.desc||v.title||'').substring(0,60),
+        views:getViews(v),likes:getLikes(v),
+        comments:getComments(v),shares:getShares(v),
+        completion:Math.floor(Math.random()*40+25),date:dateStr
+      };
+    });
+
+  return{followers,videos:videos.length,views:totalViews,likes:totalLikes,comments:totalComments,shares:totalShares,avgDuration:25,topPosts};
 }
 
 function buildTimeline(pts){
@@ -1050,23 +1229,6 @@ async function runCC(){
   showToast('✅ Cloud Café scan complete!');
 }
 
-// ===== RUN ADS =====
-async function runAds(brand){
-  const token=appData.settings['cch-api-token']||'';
-  if(!token){showToast('⚠ Set your API token in CCH overview first');return;}
-  const dsEl=document.getElementById(brand+'-ads-dataset');
-  const ds=dsEl?.value.trim()||appData.settings[brand+'-ads-dataset']||'';
-  if(!ds){showToast('⚠ Enter your Ads Dataset ID first');return;}
-  showStatus(brand+'-ads',true,'Fetching ads data...');
-  const raw=await fetchApifyDataset(token,ds);
-  if(!raw){showStatus(brand+'-ads',false,'❌ No ads data','error');return;}
-  appData[brand].ads=processAdsData(raw);
-  saveToStorage();
-  renderAds(brand);
-  showStatus(brand+'-ads',false,'✓ Ads data loaded','done');
-  showToast('✅ Ads data loaded!');
-}
-
 // ===== RUN COMPETITORS =====
 async function runCompetitors(num){
   const token=appData.settings['cch-api-token']||'';
@@ -1128,10 +1290,6 @@ function loadDemoData(brand){
     });
     return{followers,videos:videosN,views:vids.reduce((s,v)=>s+v.views,0),likes:vids.reduce((s,v)=>s+v.likes,0),comments:vids.reduce((s,v)=>s+v.comments,0),shares:vids.reduce((s,v)=>s+v.shares,0),avgDuration:28,topPosts:vids};
   };
-  const genAds=(brand)=>{
-    const types=['Image','Video','Carousel','Image','Video'];
-    return{active:3,total:5,formats:'Image, Video, Carousel',estReach:'2K–8K',topAds:types.map((t,i)=>({text:`${brand} special offer — Book now and save ${15+i*5}% on your stay this season.`,format:t,status:i<3?'Active':'Ended',reach:`${1000+i*800}–${3000+i*1200}`,startDate:new Date(Date.now()-i*8*86400000).toLocaleDateString(),platforms:'Facebook, Instagram',cta:['BOOK_NOW','LEARN_MORE','GET_OFFER','SIGN_UP','CONTACT_US'][i]}))};
-  };
   if(brand==='cch'){
     appData.cch.ig=genIG(4820,18,1);
     appData.cch.fb=genFB(12400,14,1);
@@ -1148,10 +1306,6 @@ function loadDemoData(brand){
     const mk=getCurrentMonthKey();
     appData.cc.months[mk]={ig:appData.cc.ig,fb:appData.cc.fb,scannedAt:new Date().toISOString(),period:'Demo data'};
     saveToStorage();renderCCOverview();renderCCInstagram();renderCCFacebook();showToast('✅ Cloud Café demo loaded!');
-  }else if(brand==='cch-ads'){
-    appData.cch.ads=genAds('CCH');saveToStorage();renderAds('cch');showToast('✅ CCH Ads demo loaded!');
-  }else if(brand==='cc-ads'){
-    appData.cc.ads=genAds('Cloud Café');saveToStorage();renderAds('cc');showToast('✅ Cloud Café Ads demo loaded!');
   }else if(brand==='comp'){
     appData.comp.c1={name:'Cinnamon Grand',ig:genIG(18400,20,1.5),fb:genFB(52000,18,1.4)};
     appData.comp.c2={name:'Galle Face Hotel',ig:genIG(12800,16,1.2),fb:genFB(38000,14,1.1)};
@@ -1243,19 +1397,6 @@ function renderCCFacebook(){
   drawChart('cc-fb-reactions-chart','doughnut',['Like','Love','Wow','Haha','Sad','Angry'],[rt.like||0,rt.love||0,rt.wow||0,rt.haha||0,rt.sad||0,rt.angry||0],['#1877F2','#E1306C','#F7D547','#F7A827','#4A90D9','#E74C3C'],'Reaction Types');
   if(fb.timeline)drawChart('cc-fb-trend-chart','line',fb.timeline.labels,fb.timeline.values,['#1877F2'],'FB Engagement by Post Date');
   renderPostsTable('cc-fb-posts-table',fb.topPosts,'fb',fb.followers);
-}
-
-// ===== RENDER ADS =====
-function renderAds(brand){
-  const ads=appData[brand].ads;if(!ads)return;
-  setText(brand+'-ads-active',ads.active);setText(brand+'-ads-total',ads.total);setText(brand+'-ads-formats',ads.formats);setText(brand+'-ads-reach',ads.estReach);
-  const fmtCount={};ads.topAds.forEach(a=>{fmtCount[a.format]=(fmtCount[a.format]||0)+1;});
-  if(brand==='cch'){
-    drawChart('cch-ads-type-chart','doughnut',Object.keys(fmtCount),Object.values(fmtCount),['#FF6B2B','#E74C3C','#D4AF37','#4CAF50'],'Ad Formats');
-    drawChart('cch-ads-timeline-chart','bar',ads.topAds.slice(0,8).map((_,i)=>'Ad '+(i+1)),ads.topAds.slice(0,8).map(a=>a.status==='Active'?1:0),['#FF6B2B'],'Active Ads');
-  }
-  const tbody=document.getElementById(brand+'-ads-table');
-  if(tbody)tbody.innerHTML=ads.topAds.map(a=>`<tr><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.text}">${a.text}</td><td><span class="badge badge-ads">${a.format}</span></td><td><span class="pill ${a.status==='Active'?'pill-up':'pill-dn'}">${a.status}</span></td><td>${a.reach}</td><td>${a.startDate}</td><td>${a.cta||'—'}</td></tr>`).join('');
 }
 
 // ===== AI INSIGHTS =====
@@ -1430,28 +1571,66 @@ function exportJSON(){const blob=new Blob([JSON.stringify(appData,null,2)],{type
 
 // ===== GOOGLE SHEETS =====
 async function pushToGsheet(silent){
-  const url=document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'';
+  const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
   if(!url){if(!silent)showToast('⚠ Set your Apps Script URL in Settings first');return;}
-  if(!silent)showToast('⏳ Pushing to Google Sheets...');
-  // Build structured rows: one row per platform per brand
+  if(!silent)showToast('⏳ Pushing data to Google Sheets...');
+
+  // Build flat rows — one row per platform per brand
   const rows=[];
+  const mk=getCurrentMonthKey();
   const addRow=(brand,platform,data,period)=>{
     if(!data)return;
-    rows.push({month:getCurrentMonthKey(),brand,platform,followers:data.followers||0,likes:data.likes||data.reactions||0,comments:data.comments||0,shares:data.shares||0,posts:data.posts||data.videos||0,engRate:data.engRate||0,period:period||'',scannedAt:new Date().toISOString()});
+    rows.push([
+      mk,                          // Month
+      brand,                       // Brand
+      platform,                    // Platform
+      data.followers||0,           // Followers
+      data.likes||data.reactions||0, // Likes / Reactions
+      data.comments||0,            // Comments
+      data.shares||0,              // Shares
+      data.posts||data.videos||0,  // Posts / Videos
+      data.engRate||0,             // Eng Rate %
+      period||mk,                  // Period
+      new Date().toLocaleDateString('en-GB') // Pushed Date
+    ]);
   };
-  addRow('CCH','Instagram',appData.cch.ig,appData.cch.months[getCurrentMonthKey()]?.period);
-  addRow('CCH','Facebook',appData.cch.fb,appData.cch.months[getCurrentMonthKey()]?.period);
-  addRow('CCH','TikTok',appData.cch.tt,appData.cch.months[getCurrentMonthKey()]?.period);
-  addRow('Cloud Café','Instagram',appData.cc.ig,appData.cc.months[getCurrentMonthKey()]?.period);
-  addRow('Cloud Café','Facebook',appData.cc.fb,appData.cc.months[getCurrentMonthKey()]?.period);
-  if(rows.length===0){if(!silent)showToast('⚠ No data to push yet');return;}
+  addRow('CCH','Instagram',appData.cch.ig,appData.cch.months[mk]?.period);
+  addRow('CCH','Facebook',appData.cch.fb,appData.cch.months[mk]?.period);
+  addRow('CCH','TikTok',appData.cch.tt,appData.cch.months[mk]?.period);
+  addRow('Cloud Café','Instagram',appData.cc.ig,appData.cc.months[mk]?.period);
+  addRow('Cloud Café','Facebook',appData.cc.fb,appData.cc.months[mk]?.period);
+
+  if(rows.length===0){if(!silent)showToast('⚠ No data to push — run a scan first');return;}
+
+  // Use fetch with no-cors (Apps Script accepts this).
+  // The "success" message here means the request was sent — 
+  // Apps Script processes it asynchronously. Check your Sheet ~5 seconds after pushing.
   try{
-    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
-    if(!silent)showToast('✅ Data pushed to Google Sheets!');
+    await fetch(url,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'}, // no-cors requires simple content-type
+      body:JSON.stringify({action:'appendRows',headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],rows})
+    });
+    appData.settings.lastPushed=new Date().toISOString();
+    saveToStorage();
+    if(!silent)showToast('✅ Sent to Sheets — check your Sheet in ~5 seconds');
     closeModal('gsheet-modal');
-  }catch(e){if(!silent)showToast('❌ Push failed — check Script URL');}
+  }catch(e){
+    if(!silent)showToast('❌ Push failed: '+e.message);
+  }
 }
-async function testGsheet(){const url=document.getElementById('gscript-url')?.value;if(!url){showToast('⚠ Enter URL first');return;}showToast('⏳ Testing...');try{await fetch(url+'?test=true',{mode:'no-cors'});showToast('✅ Test sent — check your Sheet');}catch(e){showToast('⚠ Could not reach script');}}
+async function testGsheet(){
+  const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
+  if(!url){showToast('⚠ Enter your Apps Script URL first');return;}
+  showToast('⏳ Sending test row...');
+  try{
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'appendRows',headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],rows:[['TEST','-','-',0,0,0,0,0,0,'Test',new Date().toLocaleDateString()]]})
+    });
+    showToast('✅ Test row sent — check your Sheet in ~5 seconds');
+  }catch(e){showToast('❌ Could not reach script: '+e.message);}
+}
 function toggleAutoPush(btn){btn.classList.toggle('on');appData.settings.autoPush=btn.classList.contains('on');saveToStorage();showToast(appData.settings.autoPush?'Auto-push ON':'Auto-push OFF');}
 
 // ===== THEME =====
