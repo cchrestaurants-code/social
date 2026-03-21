@@ -633,7 +633,8 @@ nav{flex:1;padding:6px 0;}
         <div class="section-head"><div class="section-title">Google Sheets Sync</div></div>
         <div class="input-group"><label>Google Apps Script Web App URL</label><input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveSettings()"></div>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-gold" style="flex:1" onclick="pushToGsheet(true)">Push Current Data</button>
+          <button class="btn btn-gold" style="flex:1" onclick="pushToGsheet(true)">↑ Push Data</button>
+          <button class="btn btn-green" style="flex:1" onclick="loadFromGsheet()">↓ Load from Sheets</button>
           <button class="btn" onclick="testGsheet()">Test</button>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--muted)">Auto-push after each scan: <button class="toggle" id="auto-push-toggle" onclick="toggleAutoPush(this)" style="display:inline-block;vertical-align:middle;margin-left:8px"></button></div>
@@ -656,7 +657,10 @@ nav{flex:1;padding:6px 0;}
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-green" onclick="exportExcel()">↓ Export All as Excel</button>
         <button class="btn btn-gold" onclick="pushToGsheet(false)">⇪ Push to Google Sheets</button>
-        <button class="btn" onclick="exportJSON()">Export Raw JSON</button>
+        <button class="btn" style="background:rgba(212,175,55,.15);border-color:var(--gold);color:var(--gold)" onclick="pullFromGsheet()">⇩ Pull from Google Sheets</button>
+        <button class="btn" onclick="exportJSON()">↓ Export JSON Backup</button>
+        <button class="btn btn-gold" onclick="document.getElementById('import-json-input').click()">↑ Import JSON Backup</button>
+        <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importJSON(this)">
         <button class="btn" style="color:var(--crimson-bright);border-color:var(--crimson)" onclick="if(confirm('Clear ALL saved data?'))clearAllData()">Clear All Data</button>
       </div>
     </div>
@@ -684,16 +688,17 @@ nav{flex:1;padding:6px 0;}
 <div class="modal-overlay" id="gsheet-modal">
   <div class="modal">
     <h3>⇪ Google Sheets Sync <button class="modal-close" onclick="closeModal('gsheet-modal')">×</button></h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Each push writes one clean row per platform into your Sheet. Set up the Apps Script once and it works every month.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Push data to Sheets after every scan. Anyone on another computer can then click <strong style="color:var(--green-light)">Load from Sheets</strong> to restore all monthly history into their browser.</p>
     <div class="input-group"><label>Apps Script Web App URL</label><input type="text" id="gsheet-url-modal" placeholder="https://script.google.com/macros/s/.../exec" oninput="document.getElementById('gscript-url').value=this.value;saveSettings()"></div>
     <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin:12px 0;font-size:11px;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--gold);display:block;margin-bottom:8px">📋 Apps Script setup (do this once):</strong>
+      <strong style="color:var(--gold);display:block;margin-bottom:6px">📋 Setup (do this once — or redeploy if you had the old script):</strong>
       1. Open your Google Sheet → Extensions → Apps Script<br>
-      2. Delete all default code, paste the script below, click Save<br>
-      3. Click Deploy → New Deployment → Web App<br>
+      2. Replace ALL existing code with the script below → Save<br>
+      3. Click Deploy → <strong style="color:var(--text)">New Deployment</strong> (not Update) → Web App<br>
       4. Execute as: <strong style="color:var(--text)">Me</strong> · Who has access: <strong style="color:var(--text)">Anyone</strong><br>
-      5. Click Deploy → Authorize → copy the Web App URL → paste above<br><br>
-      <strong style="color:var(--gold)">Apps Script code to paste:</strong>
+      5. Copy the new Web App URL → paste in the field above<br>
+      6. <strong style="color:var(--gold)">↑ Push</strong> saves your data to Sheets · <strong style="color:var(--gold)">↓ Load</strong> restores it to any browser<br><br>
+      <strong style="color:var(--gold)">Apps Script — paste this (supports both read and write):</strong>
       <div style="background:var(--bg2);border-radius:4px;padding:10px;margin-top:6px;font-family:monospace;font-size:10px;color:var(--green-light);overflow-x:auto;white-space:pre">function doPost(e){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
   var sheet=ss.getSheetByName('SocialData');
@@ -710,11 +715,24 @@ nav{flex:1;padding:6px 0;}
   return ContentService
     .createTextOutput(JSON.stringify({status:'ok',rows:payload.rows.length}))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e){
+  var ss=SpreadsheetApp.getActiveSpreadsheet();
+  var sheet=ss.getSheetByName('SocialData');
+  if(!sheet)return ContentService.createTextOutput(JSON.stringify({rows:[]})).setMimeType(ContentService.MimeType.JSON);
+  var data=sheet.getDataRange().getValues();
+  var headers=data[0];
+  var rows=data.slice(1).filter(function(r){return r[0]!='';});
+  return ContentService
+    .createTextOutput(JSON.stringify({headers:headers,rows:rows}))
+    .setMimeType(ContentService.MimeType.JSON);
 }</div>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="pushToGsheet(false)">Push Data Now</button>
-      <button class="btn" onclick="testGsheet()">Send Test Row</button>
+      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="pushToGsheet(false)">↑ Push Data Now</button>
+      <button class="btn btn-green" style="flex:1;padding:10px" onclick="loadFromGsheet()">↓ Load from Sheets</button>
+      <button class="btn" onclick="testGsheet()">Test</button>
       <button class="btn" onclick="closeModal('gsheet-modal')">Cancel</button>
     </div>
   </div>
@@ -1834,6 +1852,77 @@ function exportExcel(){
   showToast('✅ Excel exported!');
 }
 function exportJSON(){const blob=new Blob([JSON.stringify(appData,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='social_data_'+getCurrentMonthKey()+'.json';a.click();showToast('✅ JSON exported!');}
+
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      // Merge imported data — preserve current settings if they exist, overlay everything else
+      if(imported.cch)appData.cch={...appData.cch,...imported.cch};
+      if(imported.cc)appData.cc={...appData.cc,...imported.cc};
+      if(imported.comp)appData.comp={...appData.comp,...imported.comp};
+      if(imported.settings)appData.settings={...appData.settings,...imported.settings};
+      saveToStorage();
+      syncSettingsToInputs();
+      renderIfDataExists();
+      showToast('✅ JSON imported successfully! All data restored.');
+    }catch(err){
+      showToast('❌ Invalid JSON file — could not import.');
+      console.error('Import error:',err);
+    }
+    input.value=''; // reset so same file can be re-imported
+  };
+  reader.readAsText(file);
+}
+
+async function pullFromGsheet(){
+  if(!confirm('Pull data from Google Sheets?\n\nThis will merge Sheets data into your dashboard. Your existing local data will be kept — Sheets data will be added on top.\n\nMake sure your Apps Script has the doGet function (see the Sheets modal in Settings).'))return;
+  await loadFromGsheet();
+}
+
+async function loadFromGsheet(){
+  const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
+  if(!url){showToast('⚠ Set your Apps Script URL in Google Sheets Sync first');return;}
+  showToast('⏳ Loading data from Google Sheets...');
+  try{
+    // Call the Apps Script doGet endpoint to read data back
+    const resp=await fetch(url+'?action=read');
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(!data||!data.rows||data.rows.length===0){showToast('⚠ No data found in Sheet');return;}
+    // Rebuild monthly history from sheet rows
+    // Expected columns: Month, Brand, Platform, Followers, Likes/Reactions, Comments, Shares, Posts, Eng Rate %, Period, Date
+    let imported=0;
+    data.rows.forEach(row=>{
+      const[month,brand,platform,followers,likes,comments,shares,posts,engRate,period]=row;
+      if(!month||!brand||!platform)return;
+      const b=brand.toLowerCase().includes('cloud')?'cc':'cch';
+      const p=platform.toLowerCase().includes('insta')?'ig':platform.toLowerCase().includes('face')?'fb':platform.toLowerCase().includes('tik')?'tt':null;
+      if(!p)return;
+      if(!appData[b].months[month])appData[b].months[month]={scannedAt:new Date().toISOString(),period:period||month};
+      appData[b].months[month][p]={
+        followers:parseInt(followers)||0,
+        likes:parseInt(likes)||0,reactions:parseInt(likes)||0,
+        comments:parseInt(comments)||0,
+        shares:parseInt(shares)||0,
+        posts:parseInt(posts)||0,videos:parseInt(posts)||0,
+        engRate:parseFloat(engRate)||0,
+        topPosts:[],heatmap:null,timeline:{labels:[],values:[]}
+      };
+      imported++;
+    });
+    saveToStorage();
+    renderIfDataExists();
+    showToast('✅ Loaded '+imported+' records from Google Sheets!');
+  }catch(err){
+    // If doGet not set up, guide the user
+    showToast('⚠ Could not read from Sheets. Update your Apps Script with the new doGet function — see Settings info.');
+    console.error('Sheets load error:',err);
+  }
+}
+
 
 // ===== GOOGLE SHEETS =====
 async function pushToGsheet(silent){
