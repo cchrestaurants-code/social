@@ -154,12 +154,6 @@ nav{flex:1;padding:6px 0;}
     <div class="brand">Social Analytics</div>
     <div class="sub">CCH & Cloud Café</div>
   </div>
-  <div class="credits-badge">
-    <div class="clabel">Apify Credits</div>
-    <div class="camount" id="credits-display">$5.00</div>
-    <div class="csub">Free plan · Resets monthly</div>
-    <div class="credits-bar"><div class="credits-bar-fill" id="credits-bar-fill" style="width:100%"></div></div>
-  </div>
   <nav>
     <div class="nav-section">Colombo Court Hotel</div>
     <div class="nav-item active" data-page="cch-overview" onclick="showPage(this)"><span class="nav-icon dash">◈</span><span>Overview</span></div>
@@ -176,12 +170,11 @@ nav{flex:1;padding:6px 0;}
     <div class="nav-item" data-page="comparison" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(212,175,55,.15);color:var(--gold)">↔</span><span>Compare</span></div>
     <div class="nav-item" data-page="yearly" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(76,175,80,.15);color:var(--green-light)">∿</span><span>Yearly</span></div>
     <div class="nav-item" data-page="competitors" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(105,201,208,.15);color:var(--tiktok)">⚔</span><span>Competitors</span></div>
-    <div class="nav-item" data-page="heatmap" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(231,76,60,.15);color:#E74C3C">⊞</span><span>Heatmap</span></div>
     <div class="nav-item" data-page="history" onclick="showPage(this)"><span class="nav-icon" style="background:rgba(160,153,143,.15);color:var(--muted)">⏱</span><span>History</span></div>
     <div class="nav-divider"></div>
     <div class="nav-item" data-page="settings" onclick="showPage(this)"><span class="nav-icon set">⚙</span><span>Settings</span></div>
   </nav>
-  <div class="sidebar-credit"><strong>Created by Shazwan</strong>v2.0 · Free Plan</div>
+  <div class="sidebar-credit"><strong>Created by Shazwan</strong>v7.0</div>
 </div>
 
 <div id="main">
@@ -203,6 +196,8 @@ nav{flex:1;padding:6px 0;}
   <div class="page active" id="page-cch-overview">
     <div class="run-box">
       <h3>🏨 Colombo Court Hotel &amp; Spa</h3>
+      <div style="font-size:11px;color:var(--gold);cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:6px" onclick="toggleRunBox('cch-config')"><span id="cch-config-arrow">▸</span> Show / Hide API Tokens &amp; Dataset IDs</div>
+      <div id="cch-config" style="display:none">
       <div class="input-row">
         <div class="input-group"><label>Apify API Token</label><input type="password" id="cch-api-token" placeholder="apify_api_xxxxxxxxxx" oninput="saveSettings()"></div>
         <div class="input-row" style="margin:0">
@@ -215,11 +210,27 @@ nav{flex:1;padding:6px 0;}
         <div class="input-group"><label>Facebook Dataset ID</label><input type="text" id="cch-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>TikTok Dataset ID</label><input type="text" id="cch-tt-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
-        <div class="input-group" style="display:flex;align-items:flex-end;gap:8px">
-          <button class="btn btn-crimson" style="flex:1;padding:9px" onclick="runCCH()">▶ Run CCH Scan</button>
-          <button class="btn" onclick="loadDemoData('cch')">Demo</button>
-        </div>
+        <div class="input-group"><label>TikTok Dataset ID <span style="color:var(--tiktok);font-size:9px">(clockworks/tiktok-profile-scraper)</span></label><input type="text" id="cch-tt-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
+        <div class="input-group"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.8px;margin:10px 0 6px">PROFILE SCRAPERS — pulls follower counts automatically</div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Profile Dataset ID <span style="font-size:9px;color:var(--muted)">(apify/instagram-profile-scraper)</span></label><input type="text" id="cch-ig-profile-dataset" placeholder="run separately in Apify" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Page Dataset ID <span style="font-size:9px;color:var(--muted)">(apify/facebook-pages-scraper)</span></label><input type="text" id="cch-fb-profile-dataset" placeholder="run separately in Apify" oninput="saveSettings()"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin:10px 0 6px">MANUAL FALLBACK — if profile scrapers not available</div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Followers (manual)</label><input type="number" id="cch-ig-followers-manual" placeholder="e.g. 4820" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Followers (manual)</label><input type="number" id="cch-fb-followers-manual" placeholder="e.g. 12400" oninput="saveSettings()"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>TikTok Followers (manual)</label><input type="number" id="cch-tt-followers-manual" placeholder="e.g. 1240" oninput="saveSettings()"></div>
+        <div class="input-group"></div>
+      </div>
+      </div><!-- /cch-config hidden -->
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-crimson" style="flex:1;padding:9px" onclick="runCCH()">▶ Run CCH Scan</button>
+        <button class="btn" onclick="loadDemoData('cch')">Demo</button>
       </div>
       <div id="cch-status" style="display:none;margin-top:10px">
         <div style="font-size:11px;color:var(--muted)"><span class="status-dot running" id="cch-dot"></span><span id="cch-status-text">Fetching...</span></div>
@@ -296,6 +307,10 @@ nav{flex:1;padding:6px 0;}
       <div class="card"><div class="section-head"><div class="section-title">Audience Gender Split</div></div><div class="chart-wrap" style="height:190px"><canvas id="cch-ig-demo-chart"></canvas></div></div>
       <div class="card"><div class="section-head"><div class="section-title">Hashtag Performance</div></div><div id="cch-ig-hashtags" style="display:flex;flex-wrap:wrap;gap:7px;padding:6px 0"><span style="color:var(--muted);font-size:12px">Run scan to see hashtag data</span></div></div>
     </div>
+    <div class="card mb-22">
+      <div class="section-head"><div class="section-title">Best Time to Post — Heatmap</div><span style="font-size:10px;color:var(--muted)">Based on engagement in selected period</span></div>
+      <div id="cch-ig-heatmap-wrap" class="heatmap-inline-wrap"></div>
+    </div>
   </div>
 
   <!-- CCH FACEBOOK -->
@@ -309,6 +324,20 @@ nav{flex:1;padding:6px 0;}
     <div class="grid-2 mb-22">
       <div class="card"><div class="section-head"><div class="section-title">Reaction Types</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-fb-reactions-chart"></canvas></div></div>
       <div class="card"><div class="section-head"><div class="section-title">Engagement Trend (by Post Date)</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-fb-trend-chart"></canvas></div></div>
+    </div>
+    <div class="grid-2 mb-22">
+      <div class="card"><div class="section-head"><div class="section-title">Post Type Breakdown</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-fb-type-chart"></canvas></div></div>
+      <div class="card"><div class="section-head"><div class="section-title">Best Time to Post — Heatmap</div></div><div id="cch-fb-heatmap-wrap" class="heatmap-inline-wrap"></div></div>
+    </div>
+    <div class="card mb-22" id="cch-fb-profile-box" style="display:none">
+      <div class="section-head"><div class="section-title">Page Profile Data</div><span class="badge badge-fb" style="font-size:9px">from facebook-pages-scraper</span></div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div class="card-title">Page Likes</div><div style="font-size:18px;font-weight:700" id="cch-fb-page-likes">—</div></div>
+        <div><div class="card-title">Category</div><div style="font-size:14px;font-weight:600;margin-top:4px" id="cch-fb-category">—</div></div>
+        <div><div class="card-title">Rating</div><div style="font-size:18px;font-weight:700" id="cch-fb-rating">—</div></div>
+        <div><div class="card-title">Check-ins</div><div style="font-size:18px;font-weight:700" id="cch-fb-checkins">—</div></div>
+        <div><div class="card-title">About</div><div style="font-size:12px;color:var(--text2);max-width:300px;line-height:1.5;margin-top:4px" id="cch-fb-about">—</div></div>
+      </div>
     </div>
     <div class="card mb-22">
       <div class="section-head"><div class="section-title">All Facebook Posts — Selected Period</div><span style="font-size:10px;color:var(--muted)" id="cch-fb-period-label"></span></div>
@@ -324,16 +353,20 @@ nav{flex:1;padding:6px 0;}
       <div class="card"><div class="card-title">Followers</div><div class="card-value" id="cch-tt-detail-followers">—</div></div>
       <div class="card"><div class="card-title">Total Views</div><div class="card-value" id="cch-tt-detail-views">—</div></div>
       <div class="card"><div class="card-title">Total Likes</div><div class="card-value" id="cch-tt-detail-likes">—</div></div>
-      <div class="card"><div class="card-title">Videos This Period</div><div class="card-value" id="cch-tt-detail-videos">—</div></div>
+      <div class="card"><div class="card-title">Total Saves</div><div class="card-value" id="cch-tt-detail-saves">—</div></div>
     </div>
     <div class="grid-2 mb-22">
       <div class="card"><div class="section-head"><div class="section-title">Views per Video</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-tt-views-chart"></canvas></div></div>
       <div class="card"><div class="section-head"><div class="section-title">Engagement Breakdown</div></div><div class="chart-wrap" style="height:200px"><canvas id="cch-tt-eng-chart"></canvas></div></div>
     </div>
     <div class="card mb-22">
+      <div class="section-head"><div class="section-title">Best Time to Post — Heatmap</div></div>
+      <div id="cch-tt-heatmap-wrap" class="heatmap-inline-wrap"></div>
+    </div>
+    <div class="card mb-22">
       <div class="section-head"><div class="section-title">All TikTok Videos — Selected Period</div></div>
-      <table class="data-table"><thead><tr><th>Video Caption</th><th>Date</th><th>Views</th><th>Likes</th><th>Comments</th><th>Shares</th><th>Completion %</th><th>Rating</th></tr></thead>
-      <tbody id="cch-tt-posts-table"><tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
+      <table class="data-table"><thead><tr><th>Video Caption</th><th>Date</th><th>Views</th><th>Likes</th><th>Comments</th><th>Shares</th><th>Saves</th><th>Duration</th><th>Rating</th></tr></thead>
+      <tbody id="cch-tt-posts-table"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
     </div>
   </div>
 
@@ -341,6 +374,8 @@ nav{flex:1;padding:6px 0;}
   <div class="page" id="page-cc-overview">
     <div class="run-box" style="border-left:3px solid var(--gold)">
       <h3>☕ Cloud Café <span style="color:var(--muted);font-weight:400;font-size:12px">— Optional, run after CCH if credits remain</span></h3>
+      <div style="font-size:11px;color:var(--gold);cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:6px" onclick="toggleRunBox('cc-config')"><span id="cc-config-arrow">▸</span> Show / Hide API Tokens &amp; Dataset IDs</div>
+      <div id="cc-config" style="display:none">
       <div class="input-row">
         <div class="input-group"><label>Apify API Token</label><input type="password" id="cc-api-token" placeholder="Same token as CCH" oninput="saveSettings()"></div>
         <div class="input-row" style="margin:0">
@@ -349,10 +384,21 @@ nav{flex:1;padding:6px 0;}
         </div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>Instagram Dataset ID</label><input type="text" id="cc-ig-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
-        <div class="input-group"><label>Facebook Dataset ID</label><input type="text" id="cc-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
+        <div class="input-group"><label>Instagram Posts Dataset ID</label><input type="text" id="cc-ig-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
+        <div class="input-group"><label>Facebook Posts Dataset ID</label><input type="text" id="cc-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:4px">
+      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.8px;margin:10px 0 6px">PROFILE SCRAPERS — pulls follower counts automatically</div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Profile Dataset ID</label><input type="text" id="cc-ig-profile-dataset" placeholder="run apify/instagram-profile-scraper" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Page Dataset ID</label><input type="text" id="cc-fb-profile-dataset" placeholder="run apify/facebook-pages-scraper" oninput="saveSettings()"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin:10px 0 6px">MANUAL FALLBACK</div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Followers (manual)</label><input type="number" id="cc-ig-followers-manual" placeholder="e.g. 2180" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Followers (manual)</label><input type="number" id="cc-fb-followers-manual" placeholder="e.g. 5840" oninput="saveSettings()"></div>
+      </div>
+      </div><!-- /cc-config hidden -->
+      <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-gold" style="flex:1;padding:9px" onclick="runCC()">▶ Run Cloud Café Scan</button>
         <button class="btn" onclick="loadDemoData('cc')">Demo</button>
       </div>
@@ -403,16 +449,24 @@ nav{flex:1;padding:6px 0;}
       <div class="card"><div class="card-title">Followers</div><div class="card-value" id="cc-ig-detail-followers">—</div></div>
       <div class="card"><div class="card-title">Total Likes</div><div class="card-value" id="cc-ig-detail-likes">—</div></div>
       <div class="card"><div class="card-title">Total Comments</div><div class="card-value" id="cc-ig-detail-comments">—</div></div>
-      <div class="card"><div class="card-title">Eng. Rate</div><div class="card-value" id="cc-ig-detail-rate">—</div></div>
+      <div class="card"><div class="card-title">Avg Eng. Rate</div><div class="card-value" id="cc-ig-detail-rate">—</div></div>
     </div>
     <div class="grid-2 mb-22">
       <div class="card"><div class="section-head"><div class="section-title">Post Type Breakdown</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-ig-type-chart"></canvas></div></div>
       <div class="card"><div class="section-head"><div class="section-title">Engagement Trend</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-ig-trend-chart"></canvas></div></div>
     </div>
+    <div class="grid-2 mb-22">
+      <div class="card"><div class="section-head"><div class="section-title">Audience Gender Split</div></div><div class="chart-wrap" style="height:190px"><canvas id="cc-ig-demo-chart"></canvas></div></div>
+      <div class="card"><div class="section-head"><div class="section-title">Hashtag Performance</div></div><div id="cc-ig-hashtags" style="display:flex;flex-wrap:wrap;gap:7px;padding:6px 0"><span style="color:var(--muted);font-size:12px">Run scan to see hashtag data</span></div></div>
+    </div>
+    <div class="card mb-22">
+      <div class="section-head"><div class="section-title">Best Time to Post — Heatmap</div></div>
+      <div id="cc-ig-heatmap-wrap" class="heatmap-inline-wrap"></div>
+    </div>
     <div class="card mb-22">
       <div class="section-head"><div class="section-title">All Posts — Selected Period</div></div>
-      <table class="data-table"><thead><tr><th>Caption</th><th>Type</th><th>Date</th><th>Likes</th><th>Comments</th><th>Eng. Rate</th><th>Rating</th></tr></thead>
-      <tbody id="cc-ig-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
+      <table class="data-table"><thead><tr><th>Caption</th><th>Type</th><th>Date</th><th>Likes</th><th>Comments</th><th>Views</th><th>Shares</th><th>Eng. Rate</th><th>Rating</th></tr></thead>
+      <tbody id="cc-ig-posts-table"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
     </div>
   </div>
 
@@ -422,16 +476,29 @@ nav{flex:1;padding:6px 0;}
       <div class="card"><div class="card-title">Page Followers</div><div class="card-value" id="cc-fb-detail-followers">—</div></div>
       <div class="card"><div class="card-title">Reactions</div><div class="card-value" id="cc-fb-detail-reactions">—</div></div>
       <div class="card"><div class="card-title">Shares</div><div class="card-value" id="cc-fb-detail-shares">—</div></div>
-      <div class="card"><div class="card-title">Comments</div><div class="card-value" id="cc-fb-detail-comments">—</div></div>
+      <div class="card"><div class="card-title">Avg Eng. Rate</div><div class="card-value" id="cc-fb-detail-rate">—</div></div>
     </div>
     <div class="grid-2 mb-22">
       <div class="card"><div class="section-head"><div class="section-title">Reaction Types</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-fb-reactions-chart"></canvas></div></div>
-      <div class="card"><div class="section-head"><div class="section-title">Engagement Trend (by Post Date)</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-fb-trend-chart"></canvas></div></div>
+      <div class="card"><div class="section-head"><div class="section-title">Engagement Trend</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-fb-trend-chart"></canvas></div></div>
+    </div>
+    <div class="grid-2 mb-22">
+      <div class="card"><div class="section-head"><div class="section-title">Post Type Breakdown</div></div><div class="chart-wrap" style="height:200px"><canvas id="cc-fb-type-chart"></canvas></div></div>
+      <div class="card"><div class="section-head"><div class="section-title">Best Time to Post — Heatmap</div></div><div id="cc-fb-heatmap-wrap" class="heatmap-inline-wrap"></div></div>
+    </div>
+    <div class="card mb-22" id="cc-fb-profile-box" style="display:none">
+      <div class="section-head"><div class="section-title">Page Profile Data</div><span class="badge badge-fb" style="font-size:9px">from facebook-pages-scraper</span></div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div class="card-title">Page Likes</div><div style="font-size:18px;font-weight:700" id="cc-fb-page-likes">—</div></div>
+        <div><div class="card-title">Category</div><div style="font-size:14px;font-weight:600;margin-top:4px" id="cc-fb-category">—</div></div>
+        <div><div class="card-title">Rating</div><div style="font-size:18px;font-weight:700" id="cc-fb-rating">—</div></div>
+        <div><div class="card-title">About</div><div style="font-size:12px;color:var(--text2);max-width:300px;line-height:1.5;margin-top:4px" id="cc-fb-about">—</div></div>
+      </div>
     </div>
     <div class="card mb-22">
       <div class="section-head"><div class="section-title">All Facebook Posts — Selected Period</div></div>
-      <table class="data-table"><thead><tr><th>Post Excerpt</th><th>Type</th><th>Date</th><th>Reactions</th><th>Comments</th><th>Shares</th><th>Rating</th></tr></thead>
-      <tbody id="cc-fb-posts-table"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
+      <table class="data-table"><thead><tr><th>Post Excerpt</th><th>Type</th><th>Date</th><th>Reactions</th><th>Comments</th><th>Shares</th><th>Eng. Rate</th><th>Rating</th></tr></thead>
+      <tbody id="cc-fb-posts-table"><tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No data — run a scan first</td></tr></tbody></table>
     </div>
   </div>
 
@@ -486,6 +553,7 @@ nav{flex:1;padding:6px 0;}
         <button class="btn" style="background:rgba(105,201,208,.1);border-color:var(--tiktok);color:var(--tiktok)" onclick="runCompetitors(2)">▶ Run Comp 2</button>
         <button class="btn" style="background:rgba(105,201,208,.1);border-color:var(--tiktok);color:var(--tiktok)" onclick="runCompetitors(3)">▶ Run Comp 3</button>
         <button class="btn" style="background:rgba(105,201,208,.1);border-color:var(--tiktok);color:var(--tiktok)" onclick="runCompetitors(4)">▶ Run Comp 4</button>
+        <button class="btn btn-gold" onclick="applyCompManual()">✓ Apply Manual Data</button>
         <button class="btn" onclick="loadDemoData('comp')">Load Demo</button>
       </div>
       <div id="comp-run-status" style="display:none;margin-top:10px;font-size:11px;color:var(--muted)"></div>
@@ -579,8 +647,8 @@ nav{flex:1;padding:6px 0;}
         <div class="input-group"><label>Facebook Actor</label><input type="text" id="actor-fb" value="apify/facebook-posts-scraper" oninput="saveSettings()"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>TikTok Actor</label><input type="text" id="actor-tt" value="clockworks/tiktok-profile-scraper" oninput="saveSettings()"></div>
-        <div class="input-group"><label>Facebook Ads Actor</label><input type="text" id="actor-ads" value="apify/facebook-ads-scraper" oninput="saveSettings()"></div>
+        <div class="input-group"><label>TikTok Actor <span style="color:var(--tiktok);font-size:9px">(includes followers)</span></label><input type="text" id="actor-tt" value="clockworks/tiktok-profile-scraper" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Pages Actor <span style="color:var(--facebook);font-size:9px">(for follower counts)</span></label><input type="text" id="actor-fb-profile" value="apify/facebook-pages-scraper" oninput="saveSettings()"></div>
       </div>
     </div>
     <div class="card mb-22">
@@ -594,7 +662,7 @@ nav{flex:1;padding:6px 0;}
     </div>
     <div class="card">
       <div class="section-head"><div class="section-title">About</div></div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.7">Social Analytics Dashboard · <strong style="color:var(--gold)">Created by Shazwan</strong> · Built for Colombo Court Hotel &amp; Spa and Cloud Café · v2.0 · Free Apify Plan · Data is stored locally in your browser. Use Export or Google Sheets sync to back up permanently.</p>
+      <p style="font-size:13px;color:var(--text2);line-height:1.7">Social Analytics Dashboard · <strong style="color:var(--gold)">Created by Shazwan</strong> · Built for Colombo Court Hotel &amp; Spa and Cloud Café · v7.0 · Data is stored locally in your browser. Use Export or Google Sheets sync to back up permanently.</p>
     </div>
   </div>
 </div>
@@ -683,6 +751,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateCreditsUI(parseFloat(appData.settings.creditsRemaining||5));
 });
 
+function toggleRunBox(id){const b=document.getElementById(id);if(!b)return;const open=b.style.display!=="none";b.style.display=open?"none":"block";const arr=document.getElementById(id+"-arrow");if(arr)arr.textContent=open?"▸":"▾";}
+
 function buildCompInputs(){
   const c=document.getElementById('comp-inputs');
   if(!c)return;
@@ -691,11 +761,20 @@ function buildCompInputs(){
       <div style="font-size:11px;font-weight:600;color:var(--tiktok);margin-bottom:10px">Competitor ${i}</div>
       <div class="input-row">
         <div class="input-group"><label>Name</label><input type="text" id="comp${i}-name" placeholder="e.g. Cinnamon Grand" oninput="saveSettings()"></div>
-        <div class="input-group"><label>Instagram Dataset ID</label><input type="text" id="comp${i}-ig-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
+        <div class="input-group"><label>Instagram Handle</label><input type="text" id="comp${i}-ig-handle" placeholder="@handle" oninput="saveSettings()"></div>
       </div>
       <div class="input-row">
-        <div class="input-group"><label>Facebook Dataset ID</label><input type="text" id="comp${i}-fb-dataset" placeholder="xxxxxxxxxxxxxxxxx" oninput="saveSettings()"></div>
-        <div class="input-group"><label>Instagram Handle (for reference)</label><input type="text" id="comp${i}-ig-handle" placeholder="@handle" oninput="saveSettings()"></div>
+        <div class="input-group"><label>IG Dataset ID (optional)</label><input type="text" id="comp${i}-ig-dataset" placeholder="leave blank to use manual data" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Dataset ID (optional)</label><input type="text" id="comp${i}-fb-dataset" placeholder="leave blank to use manual data" oninput="saveSettings()"></div>
+      </div>
+      <div style="font-size:9px;color:var(--gold);letter-spacing:.8px;font-weight:600;margin:8px 0 5px">MANUAL DATA — use instead of Apify if preferred</div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Followers</label><input type="number" id="comp${i}-ig-followers" placeholder="e.g. 18400" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Followers</label><input type="number" id="comp${i}-fb-followers" placeholder="e.g. 52000" oninput="saveSettings()"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Avg Likes/post</label><input type="number" id="comp${i}-ig-avg-likes" placeholder="e.g. 210" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Avg Reactions/post</label><input type="number" id="comp${i}-fb-avg-reactions" placeholder="e.g. 85" oninput="saveSettings()"></div>
       </div>
     </div>`).join('');
   syncSettingsToInputs();
@@ -736,10 +815,14 @@ function saveToStorage(){
   try{localStorage.setItem('sma_v2',JSON.stringify(appData));}catch(e){showToast('⚠ Storage full — export data to avoid loss');}
 }
 function saveSettings(){
-  const ids=['cch-api-token','cch-ig-dataset','cch-fb-dataset','cch-tt-dataset','cc-api-token','cc-ig-dataset','cc-fb-dataset','gscript-url','actor-ig','actor-fb','actor-tt'];
+  const ids=['cch-api-token','cch-ig-dataset','cch-ig-profile-dataset','cch-fb-dataset','cch-fb-profile-dataset',
+    'cch-tt-dataset','cch-ig-followers-manual','cch-fb-followers-manual','cch-tt-followers-manual',
+    'cc-api-token','cc-ig-dataset','cc-ig-profile-dataset','cc-fb-dataset','cc-fb-profile-dataset',
+    'cc-ig-followers-manual','cc-fb-followers-manual',
+    'gscript-url','actor-ig','actor-fb','actor-tt','actor-fb-profile'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)appData.settings[id]=el.value;});
   [1,2,3,4].forEach(i=>{
-    ['name','ig-dataset','fb-dataset','ig-handle'].forEach(f=>{
+    ['name','ig-dataset','fb-dataset','ig-handle','ig-followers','fb-followers','ig-avg-likes','fb-avg-reactions'].forEach(f=>{
       const el=document.getElementById(`comp${i}-${f}`);if(el)appData.settings[`comp${i}-${f}`]=el.value;
     });
   });
@@ -808,23 +891,8 @@ async function fetchApifyCredits(token){
     return remaining;
   }catch(e){console.warn('Credits fetch error:',e);return null;}
 }
-function updateCreditsUI(remaining,limit){
-  limit=limit||appData.settings.creditsLimit||5;
-  remaining=parseFloat(remaining)||parseFloat(appData.settings.creditsRemaining)||5;
-  const pct=Math.max(0,Math.min(100,(remaining/limit)*100));
-  document.getElementById('credits-display').textContent='$'+remaining.toFixed(2);
-  const bar=document.getElementById('credits-bar-fill');
-  bar.style.width=pct+'%';
-  bar.style.background=remaining>limit*0.4?'var(--gold)':remaining>limit*0.2?'#E67E22':'var(--crimson-bright)';
-}
-function updateCreditsUI(remaining){
-  remaining=parseFloat(remaining)||5;
-  const pct=Math.max(0,Math.min(100,(remaining/5)*100));
-  document.getElementById('credits-display').textContent='$'+remaining.toFixed(2);
-  const bar=document.getElementById('credits-bar-fill');
-  bar.style.width=pct+'%';
-  bar.style.background=remaining>2?'var(--gold)':remaining>1?'#E67E22':'var(--crimson-bright)';
-}
+function updateCreditsUI(){}
+function updateCreditsUI(){}
 
 // ===== DATE FILTER HELPERS =====
 function getDateRange(brand){
@@ -897,126 +965,129 @@ function inRange(d, from, to){
   return true;
 }
 
-function processIGData(raw, from, to){
-  if(!raw||!Array.isArray(raw)||raw.length===0) return null;
+// ===== PROFILE DATA EXTRACTORS =====
+function extractIGProfile(raw){
+  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+  // instagram-profile-scraper returns one or more profile objects
+  const p=raw.find(r=>r.followersCount!==undefined||r.followedByCount!==undefined)||raw[0];
+  if(!p)return null;
+  return{
+    followers:p.followersCount||p.followedByCount||p.edge_followed_by?.count||0,
+    following:p.followsCount||p.followingCount||p.edge_follow?.count||0,
+    postsCount:p.postsCount||p.igtvVideoCount||0,
+    bio:p.biography||p.bio||'',
+    category:p.businessCategoryName||p.categoryName||p.category||'Business',
+    verified:p.verified||false,
+    username:p.username||''
+  };
+}
+function extractFBProfile(raw){
+  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+  // facebook-pages-scraper returns page objects
+  const p=raw.find(r=>r.title||r.name||r.pageName)||raw[0];
+  if(!p)return null;
+  return{
+    followers:p.fans||p.followers||p.pageFollowers||p.likes||0,
+    pageLikes:p.likes||p.pageLikes||p.fans||0,
+    category:p.category||p.pageCategory||'',
+    rating:p.rating||p.overallRating||null,
+    checkins:p.checkins||p.checkinsCount||0,
+    about:p.about||p.description||''
+  };
+}
 
-  // ── 1. FOLLOWERS — scan entire array, take highest number found ──────────
-  let followers = 0;
-  const followerFields = [
-    'followersCount','followedByCount','followerCount',
-    'edge_followed_by.count','owner.edge_followed_by.count',
-    'user.edge_followed_by.count','graphql.user.edge_followed_by.count',
-    'data.user.edge_followed_by.count','authorMeta.fans',
-    'subscriberCount','fans'
-  ];
-  raw.forEach(item=>{
-    followerFields.forEach(f=>{
-      const v = f.split('.').reduce((o,k)=>o?.[k], item);
-      if(typeof v==='number' && v > followers) followers = v;
-    });
+
+function processIGData(raw, from, to, profileFollowers){
+  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+  // FOLLOWERS: from profile scraper if passed, else scan items, else manual fallback
+  let followers = profileFollowers||0;
+  if(!followers) raw.forEach(item=>{
+    [item.followersCount,item.followedByCount,item.followerCount,
+     item.edge_followed_by?.count,item.owner?.edge_followed_by?.count
+    ].forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+  });
+  // Manual fallback — read from appData settings (brand-agnostic, whichever is set)
+  if(!followers) followers=parseInt(appData.settings['cch-ig-followers-manual'])||parseInt(appData.settings['cc-ig-followers-manual'])||0;
+
+  const allPosts=raw.filter(item=>
+    item.likesCount!==undefined||item.like_count!==undefined||
+    item.commentsCount!==undefined||item.videoViewCount!==undefined||item.videoPlayCount!==undefined
+  );
+
+  // DATE: confirmed field from actual Apify IG JSON: "timestamp": "2026-03-19T14:01:39.000Z"
+  const getDate=p=>{
+    const ts=p.timestamp||p.takenAt||p.taken_at||p.taken_at_timestamp||p.date||p.created_time;
+    if(!ts)return null;
+    const d=new Date(ts);return isNaN(d)?null:d;
+  };
+  const posts=allPosts.filter(p=>{
+    if(!from&&!to)return true;
+    const d=getDate(p);
+    if(!d)return true; // lenient — include posts with no parseable date
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
   });
 
-  // ── 2. IDENTIFY POST ITEMS ───────────────────────────────────────────────
-  // A post item has at least one engagement field (likes, comments, views…)
-  const IG_TS_FIELDS = ['timestamp','taken_at_timestamp','takenAt','taken_at','date','created_time'];
-  const allPosts = raw.filter(item => {
-    const hasEng = item.likesCount!==undefined || item.like_count!==undefined
-      || item.edge_liked_by!==undefined || item.diggCount!==undefined
-      || item.videoPlayCount!==undefined || item.videoViewCount!==undefined
-      || item.commentsCount!==undefined;
-    return hasEng;
-  });
+  const getLikes   =p=>p.likesCount||p.like_count||p.edge_liked_by?.count||0;
+  const getComments=p=>p.commentsCount||p.comment_count||p.edge_media_to_comment?.count||0;
+  const getShares  =p=>p.sharesCount||p.reshares||0;
+  const getViews   =p=>p.videoViewCount||p.videoPlayCount||0;
 
-  // ── 3. DATE FILTER — lenient (include if timestamp missing/unparseable) ──
-  const posts = allPosts.filter(p => {
-    if(!from && !to) return true;
-    const d = parseTs(p, IG_TS_FIELDS);
-    return inRange(d, from, to);
-  });
+  const totalLikes   =posts.reduce((s,p)=>s+getLikes(p),0);
+  const totalComments=posts.reduce((s,p)=>s+getComments(p),0);
+  const totalViews   =posts.reduce((s,p)=>s+getViews(p),0);
+  const totalShares  =posts.reduce((s,p)=>s+getShares(p),0);
 
-  const excluded = allPosts.length - posts.length;
-  if(excluded > 0) console.log(`IG: ${posts.length} posts in range, ${excluded} excluded as outside ${from?.toDateString()}–${to?.toDateString()}`);
+  const avgEng=posts.length>0?(totalLikes+totalComments)/posts.length:0;
+  const engRate=followers>0&&posts.length>0?parseFloat((avgEng/followers*100).toFixed(2)):0;
 
-  // ── 4. METRIC EXTRACTORS ─────────────────────────────────────────────────
-  const getLikes = p => p.likesCount||p.like_count||p.edge_liked_by?.count||p.diggCount||0;
-  const getComments = p => p.commentsCount||p.comment_count||p.edge_media_to_comment?.count||0;
+  // POST TYPE: confirmed from actual JSON: type="Video","Image","Sidecar" + productType="clips"
+  const getType=p=>{
+    const t=(p.type||'').toLowerCase();
+    const pt=(p.productType||'').toLowerCase();
+    if(t==='video'||pt==='clips'||pt==='igtv'||p.videoUrl||p.videoPlayCount)return'reel';
+    if(t==='sidecar'||p.childPosts?.length>0||p.sidecarChildren?.length>0)return'carousel';
+    return'photo';
+  };
+  const typeCounts={photo:0,reel:0,carousel:0};
+  posts.forEach(p=>{typeCounts[getType(p)]++;});
 
-  const totalLikes = posts.reduce((s,p)=>s+getLikes(p), 0);
-  const totalComments = posts.reduce((s,p)=>s+getComments(p), 0);
-  const totalEng = totalLikes + totalComments;
-
-  // ── 5. ENGAGEMENT RATE ────────────────────────────────────────────────────
-  // Per-post average eng rate = avg(likes+comments per post) / followers × 100
-  // This is the standard Instagram eng rate metric used by the industry.
-  const avgEngPerPost = posts.length > 0 ? totalEng / posts.length : 0;
-  const engRate = followers > 0 && posts.length > 0
-    ? parseFloat((avgEngPerPost / followers * 100).toFixed(2))
-    : 0;
-
-  // ── 6. POST TYPE DETECTION ────────────────────────────────────────────────
-  const isVideo = p => !!(p.videoUrl||p.is_video||p.type==='Video'
-    ||p.__typename==='GraphVideo'||p.videoPlayCount||p.videoViewCount
-    ||p.mediaType===2||p.product_type==='clips'||p.product_type==='igtv');
-  const isCarousel = p => p.type==='Sidecar'||p.__typename==='GraphSidecar'
-    ||p.mediaType===8||p.childPosts?.length>0||p.sidecarChildren?.length>0;
-  const photoCount = posts.filter(p=>!isVideo(p)&&!isCarousel(p)).length;
-  const reelCount  = posts.filter(p=>isVideo(p)).length;
-  const carouselCount = posts.filter(p=>isCarousel(p)).length;
-
-  // ── 7. TOP POSTS SORTED BY DATE — newest first ───────────────────────────
-  const topPosts = [...posts]
-    .sort((a,b)=>{
-      const ta = parseTs(a, IG_TS_FIELDS)?.getTime()||0;
-      const tb = parseTs(b, IG_TS_FIELDS)?.getTime()||0;
-      return tb - ta;
-    })
-    .slice(0,30)
-    .map(p=>{
-      const d = parseTs(p, IG_TS_FIELDS);
-      return {
-        caption: (p.caption||p.alt||p.text||'(no caption)').substring(0,60),
-        type: isCarousel(p)?'carousel': isVideo(p)?'reel':'photo',
-        likes: getLikes(p),
-        comments: getComments(p),
-        saved: 0,
-        date: d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—'
+  const topPosts=[...posts]
+    .sort((a,b)=>(getDate(b)?.getTime()||0)-(getDate(a)?.getTime()||0))
+    .slice(0,30).map(p=>{
+      const d=getDate(p);
+      return{
+        caption:(p.caption||p.alt||p.text||'').replace(/\n/g,' ').substring(0,60),
+        type:getType(p),likes:getLikes(p),comments:getComments(p),shares:getShares(p),views:getViews(p),
+        date:d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'
       };
     });
 
-  // ── 8. TIMING & HEATMAP ──────────────────────────────────────────────────
-  const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const timing = {Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
-  const heatmap = Array.from({length:7},()=>Array(24).fill(0));
+  const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const timing={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
+  const heatmap=Array.from({length:7},()=>Array(24).fill(0));
   posts.forEach(p=>{
-    const d = parseTs(p, IG_TS_FIELDS);
-    if(!d||isNaN(d)) return;
-    timing[DAY[d.getDay()]] = (timing[DAY[d.getDay()]]||0)+1;
-    heatmap[d.getDay()][d.getHours()] += getLikes(p)+getComments(p);
+    const d=getDate(p);if(!d)return;
+    timing[DAYS[d.getDay()]]=(timing[DAYS[d.getDay()]]||0)+1;
+    heatmap[d.getDay()][d.getHours()]+=getLikes(p)+getComments(p);
   });
 
-  // ── 9. HASHTAGS ───────────────────────────────────────────────────────────
-  const hashMap = {};
+  // HASHTAGS: Apify includes a dedicated "hashtags" array on each post
+  const hashMap={};
   posts.forEach(p=>{
-    (p.caption||'').match(/#\w+/g)?.forEach(t=>{
-      hashMap[t]=(hashMap[t]||0)+getLikes(p);
-    });
+    const tags=Array.isArray(p.hashtags)
+      ?p.hashtags.map(t=>'#'+(t.startsWith('#')?t.slice(1):t))
+      :(p.caption||'').match(/#\w+/g)||[];
+    tags.forEach(t=>{hashMap[t]=(hashMap[t]||0)+getLikes(p);});
   });
-  const hashtags = Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+  const hashtags=Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+  const timeline=buildTimeline(posts.map(p=>({date:getDate(p),val:getLikes(p)+getComments(p)})));
 
-  // ── 10. TIMELINE ─────────────────────────────────────────────────────────
-  const timeline = buildTimeline(posts.map(p=>{
-    const d = parseTs(p, IG_TS_FIELDS);
-    return {date:d||null, val:getLikes(p)+getComments(p)};
-  }));
-
-  return {
-    followers, posts:posts.length, likes:totalLikes, comments:totalComments,
-    saved:0, engRate, topPosts, hashtags,
-    demographics:{female:58,male:42},
-    postTypes:{photo:photoCount,reel:reelCount,carousel:carouselCount},
-    timing, heatmap, timeline,
-    filteredCount:posts.length, totalAvailable:allPosts.length
-  };
+  return{followers,posts:posts.length,likes:totalLikes,comments:totalComments,shares:totalShares,views:totalViews,engRate,
+    topPosts,hashtags,demographics:{female:58,male:42},
+    postTypes:{photo:typeCounts.photo,reel:typeCounts.reel,carousel:typeCounts.carousel},
+    timing,heatmap,timeline,filteredCount:posts.length,totalAvailable:allPosts.length};
 }
 
 function processFBData(raw, from, to){
@@ -1092,6 +1163,86 @@ function processFBData(raw, from, to){
     engRate,topPosts,reactionTypes,heatmap,timeline,filteredCount:posts.length,totalAvailable:allPosts.length};
 }
 
+function processFBData(raw, from, to, profileFollowers){
+  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+  let followers=profileFollowers||0;
+  if(!followers) raw.forEach(item=>{
+    [item.pageLikes,item.pageFollowers,item.fans,item.followersCount]
+      .forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+  });
+  if(!followers) followers=parseInt(appData.settings['cch-fb-followers-manual'])||parseInt(appData.settings['cc-fb-followers-manual'])||0;
+
+  // Filter out page-info rows (no post content)
+  const allPosts=raw.filter(p=>{
+    const hasContent=p.text!==undefined||p.message!==undefined||p.story!==undefined;
+    const isPageRow=p.pageLikes!==undefined&&!p.text&&!p.message&&!p.publish_time;
+    return hasContent&&!isPageRow;
+  });
+
+  // DATE: confirmed from actual Apify FB JSON: "publish_time": 1773910888 (Unix seconds)
+  const getDate=p=>{
+    const candidates=[p.publish_time,p.time,p.created_time,p.timestamp,p.date,p.media?.[0]?.publish_time];
+    for(const ts of candidates){
+      if(!ts)continue;
+      if(typeof ts==='number'&&ts>100000000&&ts<9999999999)return new Date(ts*1000);
+      if(typeof ts==='number'&&ts>9999999999)return new Date(ts);
+      if(typeof ts==='string'){const d=new Date(ts);if(!isNaN(d))return d;}
+    }
+    return null;
+  };
+  const posts=allPosts.filter(p=>{
+    if(!from&&!to)return true;
+    const d=getDate(p);
+    if(!d)return true; // lenient
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  });
+
+  const getR=p=>p.reactionsCount||p.likesCount||p.likes||p.reactions||0;
+  const getC=p=>p.commentsCount||p.comments||0;
+  const getS=p=>p.sharesCount||p.shares||0;
+
+  const totalR=posts.reduce((s,p)=>s+getR(p),0);
+  const totalC=posts.reduce((s,p)=>s+getC(p),0);
+  const totalS=posts.reduce((s,p)=>s+getS(p),0);
+
+  const avgEng=posts.length>0?(totalR+totalC)/posts.length:0;
+  const engRate=followers>0&&posts.length>0?parseFloat((avgEng/followers*100).toFixed(2)):0;
+
+  // POST TYPE: confirmed from actual FB JSON: media[0].__typename="Video"
+  const getFBType=p=>{
+    const mt=(p.media?.[0]?.__typename||'').toLowerCase();
+    if(mt==='video'||p.videoUrl||(p.url||'').includes('/reel/'))return'video';
+    if(mt==='photo'||mt==='image')return'photo';
+    if(p.type==='event'||p.event)return'event';
+    return'post';
+  };
+  const typeCounts={video:0,photo:0,post:0,event:0};
+  posts.forEach(p=>{const t=getFBType(p);typeCounts[t]=(typeCounts[t]||0)+1;});
+
+  const topPosts=[...posts]
+    .sort((a,b)=>(getDate(b)?.getTime()||0)-(getDate(a)?.getTime()||0))
+    .slice(0,30).map(p=>{
+      const d=getDate(p);
+      return{
+        caption:(p.text||p.message||p.story||'').replace(/\n/g,' ').substring(0,60),
+        type:getFBType(p),reactions:getR(p),comments:getC(p),shares:getS(p),
+        date:d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'
+      };
+    });
+
+  const tR=totalR||1;
+  const reactionTypes={like:Math.floor(tR*.45),love:Math.floor(tR*.35),wow:Math.floor(tR*.1),haha:Math.floor(tR*.07),sad:Math.floor(tR*.02),angry:Math.floor(tR*.01)};
+
+  const heatmap=Array.from({length:7},()=>Array(24).fill(0));
+  posts.forEach(p=>{const d=getDate(p);if(!d||isNaN(d))return;heatmap[d.getDay()][d.getHours()]+=getR(p)+getC(p);});
+  const timeline=buildTimeline(posts.map(p=>({date:getDate(p),val:getR(p)+getC(p)})));
+
+  return{followers,posts:posts.length,reactions:totalR,comments:totalC,shares:totalS,engRate,
+    topPosts,reactionTypes,heatmap,timeline,postTypeCounts:typeCounts,filteredCount:posts.length,totalAvailable:allPosts.length};
+}
+
 function processTTData(raw, from, to){
   if(!raw||!Array.isArray(raw)||raw.length===0) return null;
 
@@ -1143,6 +1294,70 @@ function processTTData(raw, from, to){
     comments:totalComments,shares:totalShares,avgDuration:25,topPosts};
 }
 
+function processTTData(raw, from, to){
+  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+  // FOLLOWERS: TikTok flat export uses string keys like "authorMeta.fans"
+  let followers=0;
+  raw.forEach(item=>{
+    [item.followerCount,item['authorMeta.fans'],item.authorMeta?.fans,
+     item['authorStats.followerCount'],item.authorStats?.followerCount,item.stats?.followerCount
+    ].forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+  });
+  if(!followers) followers=parseInt(appData.settings['cch-tt-followers-manual'])||0;
+
+  const allVideos=raw.filter(v=>v.playCount!==undefined||v.diggCount!==undefined||v.commentCount!==undefined);
+
+  // DATE: confirmed from actual TikTok JSON: "createTimeISO": "2026-03-11T09:10:19.000Z"
+  const getDate=v=>{
+    const candidates=[v.createTimeISO,v['createTimeISO'],v.createTime,v['createTime'],v.created_at];
+    for(const ts of candidates){
+      if(!ts)continue;
+      if(typeof ts==='number'&&ts>100000000&&ts<9999999999)return new Date(ts*1000);
+      if(typeof ts==='string'){const d=new Date(ts);if(!isNaN(d))return d;}
+    }
+    return null;
+  };
+  const videos=allVideos.filter(v=>{
+    if(!from&&!to)return true;
+    const d=getDate(v);
+    if(!d)return true;
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  });
+
+  const getViews   =v=>v.playCount||0;
+  const getLikes   =v=>v.diggCount||0;
+  const getComments=v=>v.commentCount||0;
+  const getShares  =v=>v.shareCount||0;
+  const getSaves   =v=>v.collectCount||0; // confirmed from actual TikTok JSON
+
+  const totalViews   =videos.reduce((s,v)=>s+getViews(v),0);
+  const totalLikes   =videos.reduce((s,v)=>s+getLikes(v),0);
+  const totalComments=videos.reduce((s,v)=>s+getComments(v),0);
+  const totalShares  =videos.reduce((s,v)=>s+getShares(v),0);
+  const totalSaves   =videos.reduce((s,v)=>s+getSaves(v),0);
+
+  const heatmap=Array.from({length:7},()=>Array(24).fill(0));
+  videos.forEach(v=>{const d=getDate(v);if(!d)return;heatmap[d.getDay()][d.getHours()]+=getLikes(v)+getComments(v);});
+
+  const topPosts=[...videos]
+    .sort((a,b)=>(getDate(b)?.getTime()||0)-(getDate(a)?.getTime()||0))
+    .slice(0,30).map(v=>{
+      const d=getDate(v);
+      const dur=v['videoMeta.duration']||v.videoMeta?.duration||0;
+      return{
+        caption:(v.text||v.desc||'').replace(/\n/g,' ').substring(0,60),
+        views:getViews(v),likes:getLikes(v),comments:getComments(v),shares:getShares(v),saves:getSaves(v),
+        duration:dur?Math.round(dur)+'s':'—',
+        date:d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'
+      };
+    });
+
+  return{followers,videos:videos.length,views:totalViews,likes:totalLikes,comments:totalComments,
+    shares:totalShares,saves:totalSaves,heatmap,topPosts,filteredCount:videos.length,totalAvailable:allVideos.length};
+}
+
 function buildTimeline(pts){
   // Group engagement by date, return sorted labels and values
   const map={};
@@ -1157,25 +1372,36 @@ function buildTimeline(pts){
 
 // ===== RUN CCH =====
 async function runCCH(){
-  const token=document.getElementById('cch-api-token').value.trim();
+  const token=(document.getElementById('cch-api-token')?.value||appData.settings['cch-api-token']||'').trim();
   if(!token){showToast('⚠ Enter your Apify API token first');return;}
   const{from,to}=getDateRange('cch');
-  showStatus('cch',true,'Fetching data from Apify...');
-  const igDs=document.getElementById('cch-ig-dataset').value.trim();
-  const fbDs=document.getElementById('cch-fb-dataset').value.trim();
-  const ttDs=document.getElementById('cch-tt-dataset').value.trim();
-  const[igRaw,fbRaw,ttRaw]=await Promise.all([igDs?fetchApifyDataset(token,igDs):null,fbDs?fetchApifyDataset(token,fbDs):null,ttDs?fetchApifyDataset(token,ttDs):null]);
-  if(!igRaw&&!fbRaw&&!ttRaw){showStatus('cch',false,'❌ No data returned — check dataset IDs','error');showToast('❌ No data. Check token and dataset IDs.');return;}
-  showStatus('cch',true,'Processing & filtering by date...');
-  appData.cch.ig=igRaw?processIGData(igRaw,from,to):null;
-  appData.cch.fb=fbRaw?processFBData(fbRaw,from,to):null;
+  showStatus('cch',true,'Fetching CCH data from Apify...');
+  const igDs =(document.getElementById('cch-ig-dataset')?.value||appData.settings['cch-ig-dataset']||'').trim();
+  const igPDs=(document.getElementById('cch-ig-profile-dataset')?.value||appData.settings['cch-ig-profile-dataset']||'').trim();
+  const fbDs =(document.getElementById('cch-fb-dataset')?.value||appData.settings['cch-fb-dataset']||'').trim();
+  const fbPDs=(document.getElementById('cch-fb-profile-dataset')?.value||appData.settings['cch-fb-profile-dataset']||'').trim();
+  const ttDs =(document.getElementById('cch-tt-dataset')?.value||appData.settings['cch-tt-dataset']||'').trim();
+  const[igRaw,igPRaw,fbRaw,fbPRaw,ttRaw]=await Promise.all([
+    igDs ?fetchApifyDataset(token,igDs) :null,
+    igPDs?fetchApifyDataset(token,igPDs):null,
+    fbDs ?fetchApifyDataset(token,fbDs) :null,
+    fbPDs?fetchApifyDataset(token,fbPDs):null,
+    ttDs ?fetchApifyDataset(token,ttDs) :null
+  ]);
+  if(!igRaw&&!fbRaw&&!ttRaw){showStatus('cch',false,'❌ No data returned — check dataset IDs','error');showToast('❌ No data. Check your dataset IDs.');return;}
+  showStatus('cch',true,'Processing...');
+  // Extract profile-level data (followers, bio, category etc.)
+  appData.cch.igProfile=igPRaw?extractIGProfile(igPRaw):null;
+  appData.cch.fbProfile=fbPRaw?extractFBProfile(fbPRaw):null;
+  const igF=appData.cch.igProfile?.followers||0;
+  const fbF=appData.cch.fbProfile?.followers||0;
+  appData.cch.ig=igRaw?processIGData(igRaw,from,to,igF):null;
+  appData.cch.fb=fbRaw?processFBData(fbRaw,from,to,fbF):null;
   appData.cch.tt=ttRaw?processTTData(ttRaw,from,to):null;
   const monthKey=getMonthKey(from||new Date());
   appData.cch.months[monthKey]={ig:appData.cch.ig,fb:appData.cch.fb,tt:appData.cch.tt,scannedAt:new Date().toISOString(),period:fmtPeriod('cch')};
   saveToStorage();
   renderCCHOverview();renderCCHInstagram();renderCCHFacebook();renderCCHTikTok();
-  const credits=await fetchApifyCredits(token);
-  if(credits!==null)updateCreditsUI(credits);
   showStatus('cch',false,'✓ Done — '+new Date().toLocaleString(),'done');
   document.getElementById('last-run-info').textContent='CCH synced '+new Date().toLocaleTimeString();
   document.getElementById('page-date-range').textContent=fmtPeriod('cch');
@@ -1185,26 +1411,60 @@ async function runCCH(){
 
 // ===== RUN CC =====
 async function runCC(){
-  const token=document.getElementById('cc-api-token').value.trim()||appData.settings['cch-api-token']||'';
+  const token=(document.getElementById('cc-api-token')?.value||appData.settings['cch-api-token']||'').trim();
   if(!token){showToast('⚠ Enter Apify token');return;}
   const{from,to}=getDateRange('cc');
   showStatus('cc',true,'Fetching Cloud Café data...');
-  const igDs=document.getElementById('cc-ig-dataset').value.trim();
-  const fbDs=document.getElementById('cc-fb-dataset').value.trim();
-  const[igRaw,fbRaw]=await Promise.all([igDs?fetchApifyDataset(token,igDs):null,fbDs?fetchApifyDataset(token,fbDs):null]);
+  const igDs =(document.getElementById('cc-ig-dataset')?.value||appData.settings['cc-ig-dataset']||'').trim();
+  const igPDs=(document.getElementById('cc-ig-profile-dataset')?.value||appData.settings['cc-ig-profile-dataset']||'').trim();
+  const fbDs =(document.getElementById('cc-fb-dataset')?.value||appData.settings['cc-fb-dataset']||'').trim();
+  const fbPDs=(document.getElementById('cc-fb-profile-dataset')?.value||appData.settings['cc-fb-profile-dataset']||'').trim();
+  const[igRaw,igPRaw,fbRaw,fbPRaw]=await Promise.all([
+    igDs ?fetchApifyDataset(token,igDs) :null,
+    igPDs?fetchApifyDataset(token,igPDs):null,
+    fbDs ?fetchApifyDataset(token,fbDs) :null,
+    fbPDs?fetchApifyDataset(token,fbPDs):null
+  ]);
   if(!igRaw&&!fbRaw){showStatus('cc',false,'❌ No data returned','error');return;}
-  appData.cc.ig=igRaw?processIGData(igRaw,from,to):null;
-  appData.cc.fb=fbRaw?processFBData(fbRaw,from,to):null;
+  appData.cc.igProfile=igPRaw?extractIGProfile(igPRaw):null;
+  appData.cc.fbProfile=fbPRaw?extractFBProfile(fbPRaw):null;
+  const igF=appData.cc.igProfile?.followers||0;
+  const fbF=appData.cc.fbProfile?.followers||0;
+  appData.cc.ig=igRaw?processIGData(igRaw,from,to,igF):null;
+  appData.cc.fb=fbRaw?processFBData(fbRaw,from,to,fbF):null;
   const monthKey=getMonthKey(from||new Date());
   appData.cc.months[monthKey]={ig:appData.cc.ig,fb:appData.cc.fb,scannedAt:new Date().toISOString(),period:fmtPeriod('cc')};
   saveToStorage();
   renderCCOverview();renderCCInstagram();renderCCFacebook();
-  const credits=await fetchApifyCredits(token);
-  if(credits!==null)updateCreditsUI(credits);
   showStatus('cc',false,'✓ Done','done');
   if(appData.settings.autoPush&&appData.settings['gscript-url'])pushToGsheet(true);
   showToast('✅ Cloud Café scan complete!');
 }
+
+// ===== APPLY COMPETITOR MANUAL DATA =====
+function applyCompManual(){
+  [1,2,3,4].forEach(i=>{
+    const name=(document.getElementById(`comp${i}-name`)?.value||appData.settings[`comp${i}-name`]||'').trim();
+    if(!name)return;
+    const igF=parseInt(document.getElementById(`comp${i}-ig-followers`)?.value)||parseInt(appData.settings[`comp${i}-ig-followers`])||0;
+    const fbF=parseInt(document.getElementById(`comp${i}-fb-followers`)?.value)||parseInt(appData.settings[`comp${i}-fb-followers`])||0;
+    const igL=parseInt(document.getElementById(`comp${i}-ig-avg-likes`)?.value)||parseInt(appData.settings[`comp${i}-ig-avg-likes`])||0;
+    const fbR=parseInt(document.getElementById(`comp${i}-fb-avg-reactions`)?.value)||parseInt(appData.settings[`comp${i}-fb-avg-reactions`])||0;
+    const igEr=igF>0&&igL>0?parseFloat((igL/igF*100).toFixed(2)):0;
+    const fbEr=fbF>0&&fbR>0?parseFloat((fbR/fbF*100).toFixed(2)):0;
+    if(igF>0||fbF>0){
+      appData.comp['c'+i]={
+        name,
+        ig:igF>0?{followers:igF,likes:igL*20,comments:0,engRate:igEr,posts:20,topPosts:[]}:null,
+        fb:fbF>0?{followers:fbF,reactions:fbR*18,comments:0,shares:0,engRate:fbEr,posts:18,topPosts:[]}:null
+      };
+    }
+  });
+  saveToStorage();
+  renderCompetitors();
+  showToast('✅ Competitor manual data applied!');
+}
+
 
 // ===== RUN COMPETITORS =====
 async function runCompetitors(num){
@@ -1271,6 +1531,8 @@ function loadDemoData(brand){
     appData.cch.ig=genIG(4820,18,1);
     appData.cch.fb=genFB(12400,14,1);
     appData.cch.tt=genTT(1240,8);
+    appData.cch.igProfile={followers:4820,following:312,postsCount:284,bio:'Boutique Hotel in Colombo 🏨 | Spa & Dining | Events',category:'Hotel & Lodging',verified:false,username:'colombo_court_hotel'};
+    appData.cch.fbProfile={followers:12400,pageLikes:12200,category:'Hotel & Lodging',rating:4.6,checkins:3240,about:'Colombo Court Hotel & Spa — boutique luxury in the heart of Colombo.'};
     const mk=getCurrentMonthKey();
     const pk=getPrevMonthKey();
     appData.cch.months[mk]={ig:appData.cch.ig,fb:appData.cch.fb,tt:appData.cch.tt,scannedAt:new Date().toISOString(),period:'Demo data'};
@@ -1280,6 +1542,8 @@ function loadDemoData(brand){
   }else if(brand==='cc'){
     appData.cc.ig=genIG(2180,22,0.8);
     appData.cc.fb=genFB(5840,16,0.75);
+    appData.cc.igProfile={followers:2180,following:180,postsCount:142,bio:'Cloud Café Colombo ☕ | Artisan Coffee & Bites | Good Vibes',category:'Café',verified:false,username:'cloudcafe_colombo'};
+    appData.cc.fbProfile={followers:5840,pageLikes:5700,category:'Café/Bistro',rating:4.4,checkins:1820,about:'Cloud Café — specialty coffee, light bites and great atmosphere.'};
     const mk=getCurrentMonthKey();
     appData.cc.months[mk]={ig:appData.cc.ig,fb:appData.cc.fb,scannedAt:new Date().toISOString(),period:'Demo data'};
     saveToStorage();renderCCOverview();renderCCInstagram();renderCCFacebook();showToast('✅ Cloud Café demo loaded!');
@@ -1317,31 +1581,43 @@ function renderCCHInstagram(){
   const ig=appData.cch.ig;if(!ig)return;
   setText('cch-ig-detail-followers',fmt(ig.followers));setText('cch-ig-detail-likes',fmt(ig.likes));setText('cch-ig-detail-comments',fmt(ig.comments));setText('cch-ig-detail-rate',ig.engRate+'%');
   setText('cch-ig-period-label',appData.cch.months[getCurrentMonthKey()]?.period||'');
-  if(ig.filteredCount!==undefined)showDateFilterWarning('cch','ig',ig.filteredCount,ig.totalAvailable||ig.filteredCount);
   drawChart('cch-ig-type-chart','doughnut',['Photo','Reel','Carousel'],[ig.postTypes?.photo||0,ig.postTypes?.reel||0,ig.postTypes?.carousel||0],['#E1306C','#C0392B','#8B1A1A'],'Post Types');
   if(ig.timeline)drawChart('cch-ig-trend-chart','line',ig.timeline.labels,ig.timeline.values,['#E1306C'],'Engagement by Post Date');
   drawChart('cch-ig-demo-chart','doughnut',['Female','Male'],[ig.demographics?.female||58,ig.demographics?.male||42],['#E1306C','#1877F2'],'Gender');
+  renderHeatmapInline('cch-ig-heatmap-wrap',ig.heatmap);
   renderPostsTable('cch-ig-posts-table',ig.topPosts,'ig',ig.followers);
   renderHashtags('cch-ig-hashtags',ig.hashtags);
 }
 
 function renderCCHFacebook(){
   const fb=appData.cch.fb;if(!fb)return;
-  setText('cch-fb-detail-followers',fmt(fb.followers));setText('cch-fb-detail-reactions',fmt(fb.reactions));setText('cch-fb-detail-shares',fmt(fb.shares));setText('cch-fb-detail-comments',fmt(fb.comments));
-  setText('cch-fb-period-label',appData.cch.months[getCurrentMonthKey()]?.period||'');
-  if(fb.filteredCount!==undefined)showDateFilterWarning('cch','fb',fb.filteredCount,fb.totalAvailable||fb.filteredCount);
+  setText('cch-fb-detail-followers',fmt(fb.followers));setText('cch-fb-detail-reactions',fmt(fb.reactions));
+  setText('cch-fb-detail-shares',fmt(fb.shares));setText('cch-fb-detail-rate',fb.engRate+'%');
   const rt=fb.reactionTypes||{};
   drawChart('cch-fb-reactions-chart','doughnut',['Like','Love','Wow','Haha','Sad','Angry'],[rt.like||0,rt.love||0,rt.wow||0,rt.haha||0,rt.sad||0,rt.angry||0],['#1877F2','#E1306C','#F7D547','#F7A827','#4A90D9','#E74C3C'],'Reaction Types');
-  if(fb.timeline)drawChart('cch-fb-trend-chart','line',fb.timeline.labels,fb.timeline.values,['#1877F2'],'FB Engagement by Post Date');
+  if(fb.timeline)drawChart('cch-fb-trend-chart','line',fb.timeline.labels,fb.timeline.values,['#1877F2'],'FB Engagement Trend');
+  const tc=fb.postTypeCounts||{};
+  drawChart('cch-fb-type-chart','doughnut',['Video/Reel','Photo','Post','Event'],[tc.video||0,tc.photo||0,tc.post||0,tc.event||0],['#69C9D0','#E1306C','#1877F2','#D4AF37'],'Post Types');
+  renderHeatmapInline('cch-fb-heatmap-wrap',fb.heatmap);
   renderPostsTable('cch-fb-posts-table',fb.topPosts,'fb',fb.followers);
+  // Show profile box if profile data available
+  const prof=appData.cch.fbProfile;
+  if(prof&&prof.followers>0){
+    const box=document.getElementById('cch-fb-profile-box');if(box)box.style.display='block';
+    setText('cch-fb-page-likes',fmt(prof.pageLikes||prof.followers));setText('cch-fb-category',prof.category||'—');
+    setText('cch-fb-rating',prof.rating?prof.rating+'★':'—');setText('cch-fb-checkins',fmt(prof.checkins||0));
+    setText('cch-fb-about',prof.about||'—');
+  }
 }
 
 function renderCCHTikTok(){
   const tt=appData.cch.tt;if(!tt)return;
-  setText('cch-tt-detail-followers',fmt(tt.followers));setText('cch-tt-detail-views',fmt(tt.views));setText('cch-tt-detail-likes',fmt(tt.likes));setText('cch-tt-detail-videos',tt.videos);
+  setText('cch-tt-detail-followers',fmt(tt.followers));setText('cch-tt-detail-views',fmt(tt.views));
+  setText('cch-tt-detail-likes',fmt(tt.likes));setText('cch-tt-detail-saves',fmt(tt.saves||0));
   const labels=tt.topPosts?.map((_,i)=>'V'+(i+1))||[];
   drawChart('cch-tt-views-chart','line',labels,tt.topPosts?.map(p=>p.views||0)||[],['#69C9D0'],'Views per Video');
-  drawChart('cch-tt-eng-chart','bar',['Total Views','Total Likes','Comments','Shares'],[tt.views,tt.likes,tt.comments,tt.shares],['#69C9D0','#E1306C','#D4AF37','#4CAF50'],'TikTok Engagement');
+  drawChart('cch-tt-eng-chart','bar',['Views','Likes','Comments','Shares','Saves'],[tt.views,tt.likes,tt.comments,tt.shares,tt.saves||0],['#69C9D0','#E1306C','#D4AF37','#4CAF50','#8B1A1A'],'TikTok Metrics');
+  renderHeatmapInline('cch-tt-heatmap-wrap',tt.heatmap);
   renderPostsTable('cch-tt-posts-table',tt.topPosts,'tt',tt.followers);
 }
 
@@ -1365,15 +1641,28 @@ function renderCCInstagram(){
   setText('cc-ig-detail-followers',fmt(ig.followers));setText('cc-ig-detail-likes',fmt(ig.likes));setText('cc-ig-detail-comments',fmt(ig.comments));setText('cc-ig-detail-rate',ig.engRate+'%');
   drawChart('cc-ig-type-chart','doughnut',['Photo','Reel','Carousel'],[ig.postTypes?.photo||0,ig.postTypes?.reel||0,ig.postTypes?.carousel||0],['#E1306C','#C0392B','#8B1A1A'],'Post Types');
   if(ig.timeline)drawChart('cc-ig-trend-chart','line',ig.timeline.labels,ig.timeline.values,['#E1306C'],'Engagement by Post Date');
+  drawChart('cc-ig-demo-chart','doughnut',['Female','Male'],[ig.demographics?.female||65,ig.demographics?.male||35],['#E1306C','#1877F2'],'Gender');
+  renderHeatmapInline('cc-ig-heatmap-wrap',ig.heatmap);
   renderPostsTable('cc-ig-posts-table',ig.topPosts,'ig',ig.followers);
+  renderHashtags('cc-ig-hashtags',ig.hashtags);
 }
 function renderCCFacebook(){
   const fb=appData.cc.fb;if(!fb)return;
-  setText('cc-fb-detail-followers',fmt(fb.followers));setText('cc-fb-detail-reactions',fmt(fb.reactions));setText('cc-fb-detail-shares',fmt(fb.shares));setText('cc-fb-detail-comments',fmt(fb.comments));
+  setText('cc-fb-detail-followers',fmt(fb.followers));setText('cc-fb-detail-reactions',fmt(fb.reactions));
+  setText('cc-fb-detail-shares',fmt(fb.shares));setText('cc-fb-detail-rate',fb.engRate+'%');
   const rt=fb.reactionTypes||{};
   drawChart('cc-fb-reactions-chart','doughnut',['Like','Love','Wow','Haha','Sad','Angry'],[rt.like||0,rt.love||0,rt.wow||0,rt.haha||0,rt.sad||0,rt.angry||0],['#1877F2','#E1306C','#F7D547','#F7A827','#4A90D9','#E74C3C'],'Reaction Types');
-  if(fb.timeline)drawChart('cc-fb-trend-chart','line',fb.timeline.labels,fb.timeline.values,['#1877F2'],'FB Engagement by Post Date');
+  if(fb.timeline)drawChart('cc-fb-trend-chart','line',fb.timeline.labels,fb.timeline.values,['#1877F2'],'FB Engagement Trend');
+  const tc=fb.postTypeCounts||{};
+  drawChart('cc-fb-type-chart','doughnut',['Video/Reel','Photo','Post','Event'],[tc.video||0,tc.photo||0,tc.post||0,tc.event||0],['#69C9D0','#E1306C','#1877F2','#D4AF37'],'Post Types');
+  renderHeatmapInline('cc-fb-heatmap-wrap',fb.heatmap);
   renderPostsTable('cc-fb-posts-table',fb.topPosts,'fb',fb.followers);
+  const prof=appData.cc.fbProfile;
+  if(prof&&prof.followers>0){
+    const box=document.getElementById('cc-fb-profile-box');if(box)box.style.display='block';
+    setText('cc-fb-page-likes',fmt(prof.pageLikes||prof.followers));setText('cc-fb-category',prof.category||'—');
+    setText('cc-fb-rating',prof.rating?prof.rating+'★':'—');setText('cc-fb-about',prof.about||'—');
+  }
 }
 
 // ===== AI INSIGHTS =====
@@ -1632,19 +1921,64 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function clearAllData(){if(!confirm('Clear ALL data?'))return;appData={cch:{ig:null,fb:null,tt:null,ads:null,months:{}},cc:{ig:null,fb:null,ads:null,months:{}},comp:{c1:null,c2:null,c3:null,c4:null},settings:appData.settings};saveToStorage();showToast('🗑 All data cleared');}
 
 function renderPostsTable(tableId,posts,platform,followers){
-  if(!posts||posts.length===0)return;
   const tbody=document.getElementById(tableId);if(!tbody)return;
+  if(!posts||posts.length===0){
+    const cols=platform==='tt'?9:platform==='ig'?9:8;
+    tbody.innerHTML=`<tr><td colspan="${cols}" style="color:var(--muted);text-align:center;padding:24px">No posts in selected period</td></tr>`;
+    return;
+  }
   const perf=l=>l>200?'<span class="badge badge-good">Top</span>':l>80?'<span class="badge badge-mid">Good</span>':'<span class="badge badge-bad">Low</span>';
-  const calcER=(likes,comments,f)=>f>0?((likes+comments)/f*100).toFixed(2)+'%':'—';
+  const er=(l,c,f)=>f>0?parseFloat(((l+c)/f*100).toFixed(2))+'%':'—';
+  const cap=p=>`<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p.caption||'').replace(/"/g,'')}">${p.caption||'—'}</td>`;
   if(platform==='ig'){
-    tbody.innerHTML=posts.map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.caption||''}">${p.caption||'—'}</td><td><span class="post-type-chip">${p.type||'photo'}</span></td><td>${p.date||'—'}</td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.saved||0)}</td><td>${calcER(p.likes||0,p.comments||0,followers||1)}</td><td>${perf(p.likes||0)}</td></tr>`).join('');
+    tbody.innerHTML=posts.map(p=>`<tr>${cap(p)}<td><span class="post-type-chip">${p.type||'photo'}</span></td><td>${p.date||'—'}</td><td><strong>${fmt(p.likes||0)}</strong></td><td>${fmt(p.comments||0)}</td><td>${fmt(p.views||0)}</td><td>${fmt(p.shares||0)}</td><td>${er(p.likes||0,p.comments||0,followers||1)}</td><td>${perf(p.likes||0)}</td></tr>`).join('');
   }else if(platform==='fb'){
-    tbody.innerHTML=posts.map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.caption||''}">${p.caption||'—'}</td><td><span class="post-type-chip">${p.type||'post'}</span></td><td>${p.date||'—'}</td><td>${fmt(p.reactions||p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>${calcER(p.reactions||0,p.comments||0,followers||1)}</td><td>${perf(p.reactions||p.likes||0)}</td></tr>`).join('');
+    tbody.innerHTML=posts.map(p=>`<tr>${cap(p)}<td><span class="post-type-chip">${p.type||'post'}</span></td><td>${p.date||'—'}</td><td><strong>${fmt(p.reactions||p.likes||0)}</strong></td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>${er(p.reactions||0,p.comments||0,followers||1)}</td><td>${perf(p.reactions||p.likes||0)}</td></tr>`).join('');
   }else if(platform==='tt'){
-    tbody.innerHTML=posts.map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.caption||''}">${p.caption||'—'}</td><td>${p.date||'—'}</td><td>${fmt(p.views||0)}</td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>${p.completion||'—'}%</td><td>${perf(p.likes||0)}</td></tr>`).join('');
+    tbody.innerHTML=posts.map(p=>`<tr>${cap(p)}<td>${p.date||'—'}</td><td><strong>${fmt(p.views||0)}</strong></td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td><td>${fmt(p.saves||0)}</td><td>${p.duration||'—'}</td><td>${perf(p.likes||0)}</td></tr>`).join('');
   }
 }
 function renderHashtags(elId,hashtags){const el=document.getElementById(elId);if(!el||!hashtags)return;if(hashtags.length===0){el.innerHTML='<span style="color:var(--muted);font-size:12px">No hashtags found in posts</span>';return;}el.innerHTML=hashtags.map(h=>`<span style="background:var(--bg4);border:1px solid var(--border2);padding:3px 9px;border-radius:5px;font-size:11px;color:var(--tiktok)">${h}</span>`).join('');}
+
+// ===== INLINE HEATMAP (embedded in each platform page) =====
+function renderHeatmapInline(containerId, heatmap){
+  const el=document.getElementById(containerId);if(!el)return;
+  if(!heatmap||heatmap.length!==7){
+    el.innerHTML='<span style="color:var(--muted);font-size:11px;padding:8px 0;display:block">No timing data — need date/time stamps in posts</span>';
+    return;
+  }
+  const displayDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayOrder=[1,2,3,4,5,6,0]; // JS getDay(): 0=Sun,1=Mon...6=Sat → display Mon first
+  const hours=Array.from({length:24},(_,i)=>i);
+  const grid=displayDays.map((_,di)=>hours.map(h=>heatmap[dayOrder[di]]?.[h]||0));
+  const maxVal=Math.max(...grid.flat(),1);
+  const fmtH=h=>h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p';
+  // Find top 3 slots
+  const slots=[];
+  grid.forEach((row,di)=>row.forEach((v,h)=>{if(v>0)slots.push({day:displayDays[di],h,v});}));
+  slots.sort((a,b)=>b.v-a.v);
+  const topSlots=slots.slice(0,3);
+  el.innerHTML=`<div style="overflow-x:auto">
+    <div style="display:grid;grid-template-columns:28px repeat(24,1fr);gap:2px;min-width:520px;font-size:8px;margin-bottom:6px">
+      <div></div>
+      ${hours.map(h=>`<div style="color:var(--muted);text-align:center;padding-bottom:2px">${h%4===0?fmtH(h):''}</div>`).join('')}
+      ${displayDays.map((day,di)=>`
+        <div style="color:var(--text2);font-size:9px;font-weight:500;display:flex;align-items:center">${day}</div>
+        ${hours.map(h=>{
+          const v=grid[di][h];
+          const isTop=topSlots.some(s=>s.day===day&&s.h===h);
+          const a=v===0?0.04:0.08+(v/maxVal)*0.88;
+          return`<div title="${day} ${fmtH(h)}: ${v} eng" style="height:16px;border-radius:2px;background:rgba(231,76,60,${a.toFixed(2)});border:${isTop?'1.5px solid #E74C3C':'none'}"></div>`;
+        }).join('')}
+      `).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+      ${topSlots.map((s,i)=>`<span style="font-size:10px;background:rgba(231,76,60,${0.15+i*0.05});color:var(--crimson-bright);padding:2px 8px;border-radius:4px;border:1px solid rgba(231,76,60,.3)">🔥 ${s.day} ${fmtH(s.h)}</span>`).join('')}
+      <span style="font-size:9px;color:var(--muted);margin-left:auto">Best times to post ↑</span>
+    </div>
+  </div>`;
+}
+
 
 // ===== HEATMAP REFRESH =====
 function refreshHeatmap(){
