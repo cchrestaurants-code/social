@@ -864,306 +864,283 @@ function strictFilterByDate(items,getTsFn,from,to){
   });
 }
 
-function processIGData(raw,from,to){
-  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
-
-  // ── STEP 1: Extract follower count ──────────────────────────────────
-  // Apify returns follower data in many formats depending on actor version.
-  // We scan the ENTIRE raw array and take the highest value found.
-  let followers=0;
-  raw.forEach(item=>{
-    const candidates=[
-      item.followersCount, item.followedByCount,
-      item.edge_followed_by?.count,
-      item.owner?.edge_followed_by?.count,
-      item.user?.edge_followed_by?.count,
-      item.graphql?.user?.edge_followed_by?.count,
-      item.data?.user?.edge_followed_by?.count,
-      item.authorMeta?.fans,
-      item.ownerFullName ? undefined : item.fans, // only if looks like profile
-      item.subscriberCount,
-    ];
-    candidates.forEach(v=>{ if(typeof v==='number'&&v>followers)followers=v; });
-  });
-
-  // ── STEP 2: Identify posts (items that have engagement data) ─────────
-  const allPosts=raw.filter(item=>{
-    // Must have some engagement field
-    const hasEng=item.likesCount!==undefined
-      ||item.like_count!==undefined
-      ||item.edge_liked_by!==undefined
-      ||item.diggCount!==undefined
-      ||item.videoPlayCount!==undefined;
-    if(!hasEng)return false;
-    // Skip pure profile rows that have followerCount but no likes
-    if((item.followersCount||item.followedByCount)&&item.likesCount===undefined&&item.like_count===undefined)return false;
-    return true;
-  });
-
-  // ── STEP 3: Strict date filter ───────────────────────────────────────
-  const getTs=p=>{
-    const raw=p.timestamp||p.taken_at_timestamp||p.takenAt||p.taken_at||p.date||p.shortCode;
-    if(!raw)return null;
-    if(typeof raw==='number')return raw<9999999999?raw*1000:raw;
-    return raw;
-  };
-  const posts=(from||to)?allPosts.filter(p=>{
-    const ts=getTs(p);
-    if(!ts)return false; // no timestamp → exclude when range is set
-    const d=new Date(ts);
-    if(isNaN(d))return false;
-    if(from&&d<from)return false;
-    if(to&&d>to)return false;
-    return true;
-  }):allPosts;
-
-  if(posts.length===0&&(from||to)){
-    console.warn(`IG: 0 posts in date range. ${allPosts.length} total available. Check timestamps in your dataset.`);
+// ─────────────────────────────────────────────────────────────────────────────
+// UNIVERSAL TIMESTAMP PARSER
+// Tries every known Apify field name and format. Returns a Date or null.
+// ─────────────────────────────────────────────────────────────────────────────
+function parseTs(item, fields){
+  for(const f of fields){
+    const v = f.split('.').reduce((o,k)=>o?.[k], item);
+    if(!v) continue;
+    // Unix seconds (10 digits)
+    if(typeof v==='number' && v>100000000 && v<9999999999) return new Date(v*1000);
+    // Unix milliseconds (13 digits)
+    if(typeof v==='number' && v>9999999999) return new Date(v);
+    // ISO string or any parseable string
+    if(typeof v==='string'){
+      const d=new Date(v);
+      if(!isNaN(d)) return d;
+    }
   }
+  return null;
+}
 
-  // ── STEP 4: Metric extractors ────────────────────────────────────────
-  const getLikes=p=>p.likesCount||p.like_count||p.edge_liked_by?.count||p.diggCount||0;
-  const getComments=p=>p.commentsCount||p.comment_count||p.edge_media_to_comment?.count||0;
-  const getSaved=p=>p.videoViewCount||0;
+// ─────────────────────────────────────────────────────────────────────────────
+// DATE RANGE FILTER — only filters if date can be parsed AND is out of range.
+// Posts with unparseable timestamps are INCLUDED (not silently dropped).
+// ─────────────────────────────────────────────────────────────────────────────
+function inRange(d, from, to){
+  if(!from && !to) return true;    // no filter set
+  if(!d || isNaN(d)) return true;  // can't parse → include it
+  if(from && d < from) return false;
+  if(to && d > to) return false;
+  return true;
+}
 
-  const totalLikes=posts.reduce((s,p)=>s+getLikes(p),0);
-  const totalComments=posts.reduce((s,p)=>s+getComments(p),0);
+function processIGData(raw, from, to){
+  if(!raw||!Array.isArray(raw)||raw.length===0) return null;
 
-  // ── STEP 5: Engagement rate ──────────────────────────────────────────
-  // Correct formula: (total likes + total comments) / followers × 100
-  // This gives overall eng rate for the period, NOT per-post.
-  // Industry standard: total engagement ÷ followers.
-  const engRate=followers>0
-    ? parseFloat(((totalLikes+totalComments)/followers*100).toFixed(2))
+  // ── 1. FOLLOWERS — scan entire array, take highest number found ──────────
+  let followers = 0;
+  const followerFields = [
+    'followersCount','followedByCount','followerCount',
+    'edge_followed_by.count','owner.edge_followed_by.count',
+    'user.edge_followed_by.count','graphql.user.edge_followed_by.count',
+    'data.user.edge_followed_by.count','authorMeta.fans',
+    'subscriberCount','fans'
+  ];
+  raw.forEach(item=>{
+    followerFields.forEach(f=>{
+      const v = f.split('.').reduce((o,k)=>o?.[k], item);
+      if(typeof v==='number' && v > followers) followers = v;
+    });
+  });
+
+  // ── 2. IDENTIFY POST ITEMS ───────────────────────────────────────────────
+  // A post item has at least one engagement field (likes, comments, views…)
+  const IG_TS_FIELDS = ['timestamp','taken_at_timestamp','takenAt','taken_at','date','created_time'];
+  const allPosts = raw.filter(item => {
+    const hasEng = item.likesCount!==undefined || item.like_count!==undefined
+      || item.edge_liked_by!==undefined || item.diggCount!==undefined
+      || item.videoPlayCount!==undefined || item.videoViewCount!==undefined
+      || item.commentsCount!==undefined;
+    return hasEng;
+  });
+
+  // ── 3. DATE FILTER — lenient (include if timestamp missing/unparseable) ──
+  const posts = allPosts.filter(p => {
+    if(!from && !to) return true;
+    const d = parseTs(p, IG_TS_FIELDS);
+    return inRange(d, from, to);
+  });
+
+  const excluded = allPosts.length - posts.length;
+  if(excluded > 0) console.log(`IG: ${posts.length} posts in range, ${excluded} excluded as outside ${from?.toDateString()}–${to?.toDateString()}`);
+
+  // ── 4. METRIC EXTRACTORS ─────────────────────────────────────────────────
+  const getLikes = p => p.likesCount||p.like_count||p.edge_liked_by?.count||p.diggCount||0;
+  const getComments = p => p.commentsCount||p.comment_count||p.edge_media_to_comment?.count||0;
+
+  const totalLikes = posts.reduce((s,p)=>s+getLikes(p), 0);
+  const totalComments = posts.reduce((s,p)=>s+getComments(p), 0);
+  const totalEng = totalLikes + totalComments;
+
+  // ── 5. ENGAGEMENT RATE ────────────────────────────────────────────────────
+  // Per-post average eng rate = avg(likes+comments per post) / followers × 100
+  // This is the standard Instagram eng rate metric used by the industry.
+  const avgEngPerPost = posts.length > 0 ? totalEng / posts.length : 0;
+  const engRate = followers > 0 && posts.length > 0
+    ? parseFloat((avgEngPerPost / followers * 100).toFixed(2))
     : 0;
 
-  // ── STEP 6: Post type detection ───────────────────────────────────────
-  const isVideo=p=>!!(p.videoUrl||p.is_video||p.type==='Video'||p.__typename==='GraphVideo'||p.videoPlayCount);
-  const isCarousel=p=>p.type==='Sidecar'||p.__typename==='GraphSidecar'||p.childPosts?.length>0;
-  const photoCount=posts.filter(p=>!isVideo(p)&&!isCarousel(p)).length;
-  const reelCount=posts.filter(p=>isVideo(p)).length;
-  const carouselCount=posts.filter(p=>isCarousel(p)).length;
+  // ── 6. POST TYPE DETECTION ────────────────────────────────────────────────
+  const isVideo = p => !!(p.videoUrl||p.is_video||p.type==='Video'
+    ||p.__typename==='GraphVideo'||p.videoPlayCount||p.videoViewCount
+    ||p.mediaType===2||p.product_type==='clips'||p.product_type==='igtv');
+  const isCarousel = p => p.type==='Sidecar'||p.__typename==='GraphSidecar'
+    ||p.mediaType===8||p.childPosts?.length>0||p.sidecarChildren?.length>0;
+  const photoCount = posts.filter(p=>!isVideo(p)&&!isCarousel(p)).length;
+  const reelCount  = posts.filter(p=>isVideo(p)).length;
+  const carouselCount = posts.filter(p=>isCarousel(p)).length;
 
-  // ── STEP 7: Build top posts sorted BY DATE (newest first) ────────────
-  const topPosts=[...posts]
+  // ── 7. TOP POSTS SORTED BY DATE — newest first ───────────────────────────
+  const topPosts = [...posts]
     .sort((a,b)=>{
-      const ta=new Date(getTs(a)||0).getTime();
-      const tb=new Date(getTs(b)||0).getTime();
-      return tb-ta; // newest first
+      const ta = parseTs(a, IG_TS_FIELDS)?.getTime()||0;
+      const tb = parseTs(b, IG_TS_FIELDS)?.getTime()||0;
+      return tb - ta;
     })
     .slice(0,30)
     .map(p=>{
-      const ts=getTs(p);
-      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-      return{
-        caption:(p.caption||p.alt||p.text||'').substring(0,60),
-        type:isCarousel(p)?'carousel':isVideo(p)?'reel':'photo',
-        likes:getLikes(p),comments:getComments(p),saved:getSaved(p),
-        date:dateStr,
-        _ts:ts?new Date(ts).getTime():0
+      const d = parseTs(p, IG_TS_FIELDS);
+      return {
+        caption: (p.caption||p.alt||p.text||'(no caption)').substring(0,60),
+        type: isCarousel(p)?'carousel': isVideo(p)?'reel':'photo',
+        likes: getLikes(p),
+        comments: getComments(p),
+        saved: 0,
+        date: d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—'
       };
     });
 
-  // ── STEP 8: Timing & heatmap ─────────────────────────────────────────
-  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const timing={Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
-  const heatmap=Array.from({length:7},()=>Array(24).fill(0));
+  // ── 8. TIMING & HEATMAP ──────────────────────────────────────────────────
+  const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const timing = {Mon:0,Tue:0,Wed:0,Thu:0,Fri:0,Sat:0,Sun:0};
+  const heatmap = Array.from({length:7},()=>Array(24).fill(0));
   posts.forEach(p=>{
-    const ts=getTs(p);if(!ts)return;
-    const d=new Date(ts);if(isNaN(d))return;
-    timing[dayNames[d.getDay()]]=(timing[dayNames[d.getDay()]]||0)+1;
-    heatmap[d.getDay()][d.getHours()]+=getLikes(p)+getComments(p);
+    const d = parseTs(p, IG_TS_FIELDS);
+    if(!d||isNaN(d)) return;
+    timing[DAY[d.getDay()]] = (timing[DAY[d.getDay()]]||0)+1;
+    heatmap[d.getDay()][d.getHours()] += getLikes(p)+getComments(p);
   });
 
-  // ── STEP 9: Hashtags ─────────────────────────────────────────────────
-  const hashMap={};
+  // ── 9. HASHTAGS ───────────────────────────────────────────────────────────
+  const hashMap = {};
   posts.forEach(p=>{
-    (p.caption||'').match(/#\w+/g)?.forEach(t=>{hashMap[t]=(hashMap[t]||0)+getLikes(p);});
+    (p.caption||'').match(/#\w+/g)?.forEach(t=>{
+      hashMap[t]=(hashMap[t]||0)+getLikes(p);
+    });
   });
-  const hashtags=Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+  const hashtags = Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
 
-  // ── STEP 10: Timeline ─────────────────────────────────────────────────
-  const timeline=buildTimeline(posts.map(p=>{
-    const ts=getTs(p);
-    return{date:ts?new Date(ts):null,val:getLikes(p)+getComments(p)};
+  // ── 10. TIMELINE ─────────────────────────────────────────────────────────
+  const timeline = buildTimeline(posts.map(p=>{
+    const d = parseTs(p, IG_TS_FIELDS);
+    return {date:d||null, val:getLikes(p)+getComments(p)};
   }));
 
-  return{
-    followers,posts:posts.length,likes:totalLikes,comments:totalComments,saved:0,engRate,
-    topPosts,hashtags,demographics:{female:58,male:42},
+  return {
+    followers, posts:posts.length, likes:totalLikes, comments:totalComments,
+    saved:0, engRate, topPosts, hashtags,
+    demographics:{female:58,male:42},
     postTypes:{photo:photoCount,reel:reelCount,carousel:carouselCount},
-    timing,heatmap,timeline,
-    filteredCount:posts.length,totalAvailable:allPosts.length
+    timing, heatmap, timeline,
+    filteredCount:posts.length, totalAvailable:allPosts.length
   };
 }
 
-function processFBData(raw,from,to){
-  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+function processFBData(raw, from, to){
+  if(!raw||!Array.isArray(raw)||raw.length===0) return null;
 
-  // ── STEP 1: Extract followers ────────────────────────────────────────
-  let followers=0;
+  const FB_TS_FIELDS = ['time','created_time','timestamp','date','createdTime','publishTime'];
+
+  // 1. FOLLOWERS — scan entire array
+  let followers = 0;
   raw.forEach(item=>{
-    const candidates=[
-      item.pageLikes, item.pageFollowers, item.fans,
-      item.likesCount, item.followersCount,
-      item.page?.likes, item.page?.followers,
-    ];
-    candidates.forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+    ['pageLikes','pageFollowers','fans','followersCount','likesCount'].forEach(f=>{
+      if(typeof item[f]==='number' && item[f]>followers) followers=item[f];
+    });
+    if(item.page?.likes && item.page.likes>followers) followers=item.page.likes;
+    if(item.page?.followers && item.page.followers>followers) followers=item.page.followers;
   });
 
-  // ── STEP 2: Identify post items ──────────────────────────────────────
-  const allPosts=raw.filter(p=>{
-    const hasText=p.text!==undefined||p.message!==undefined||p.story!==undefined;
-    const hasEng=p.reactionsCount!==undefined||p.likes!==undefined||p.reactions!==undefined||p.commentsCount!==undefined;
-    return hasText||hasEng;
+  // 2. IDENTIFY POSTS
+  const allPosts = raw.filter(p=>{
+    const hasContent = p.text!==undefined||p.message!==undefined||p.story!==undefined;
+    const hasEng = p.reactionsCount!==undefined||p.likesCount!==undefined
+      ||p.likes!==undefined||p.reactions!==undefined||p.commentsCount!==undefined;
+    return (hasContent||hasEng) && !(p.pageLikes!==undefined&&!p.text&&!p.message&&!p.time);
   });
 
-  // ── STEP 3: Strict date filter ───────────────────────────────────────
-  const getTs=p=>p.time||p.created_time||p.timestamp||p.date||p.createdTime;
-  const posts=(from||to)?allPosts.filter(p=>{
-    const ts=getTs(p);
-    if(!ts)return false;
-    const d=new Date(ts);
-    if(isNaN(d))return false;
-    if(from&&d<from)return false;
-    if(to&&d>to)return false;
-    return true;
-  }):allPosts;
+  // 3. DATE FILTER — lenient (include if no timestamp or unparseable)
+  const posts = allPosts.filter(p=>{
+    if(!from && !to) return true;
+    const d = parseTs(p, FB_TS_FIELDS);
+    return inRange(d, from, to);
+  });
+  if(posts.length===0 && (from||to)) console.log('FB: 0 posts in range. '+allPosts.length+' total.');
 
-  if(posts.length===0&&(from||to))console.warn(`FB: 0 posts in date range. ${allPosts.length} total available.`);
+  // 4. METRICS
+  const getR = p=>p.reactionsCount||p.likesCount||p.likes||p.reactions||0;
+  const getC = p=>p.commentsCount||p.comments||0;
+  const getS = p=>p.sharesCount||p.shares||0;
+  const totalReactions = posts.reduce((s,p)=>s+getR(p),0);
+  const totalComments  = posts.reduce((s,p)=>s+getC(p),0);
+  const totalShares    = posts.reduce((s,p)=>s+getS(p),0);
+  const avgEngPerPost  = posts.length>0?(totalReactions+totalComments)/posts.length:0;
+  const engRate = followers>0&&posts.length>0 ? parseFloat((avgEngPerPost/followers*100).toFixed(2)) : 0;
 
-  // ── STEP 4: Metrics ──────────────────────────────────────────────────
-  const getR=p=>p.reactionsCount||p.likesCount||p.likes||p.reactions||0;
-  const getC=p=>p.commentsCount||p.comments||0;
-  const getS=p=>p.sharesCount||p.shares||0;
-
-  const totalReactions=posts.reduce((s,p)=>s+getR(p),0);
-  const totalComments=posts.reduce((s,p)=>s+getC(p),0);
-  const totalShares=posts.reduce((s,p)=>s+getS(p),0);
-
-  // Correct eng rate: total engagement ÷ followers
-  const engRate=followers>0
-    ? parseFloat(((totalReactions+totalComments)/followers*100).toFixed(2))
-    : 0;
-
-  // ── STEP 5: Posts sorted by date (newest first) ──────────────────────
-  const topPosts=[...posts]
-    .sort((a,b)=>{
-      const ta=new Date(getTs(a)||0).getTime();
-      const tb=new Date(getTs(b)||0).getTime();
-      return tb-ta;
-    })
+  // 5. TOP POSTS — newest first
+  const topPosts = [...posts]
+    .sort((a,b)=>(parseTs(b,FB_TS_FIELDS)?.getTime()||0)-(parseTs(a,FB_TS_FIELDS)?.getTime()||0))
     .slice(0,30)
     .map(p=>{
-      const ts=getTs(p);
-      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-      return{
-        caption:(p.text||p.message||p.story||p.storyTitle||'').substring(0,60),
-        type:p.videoUrl||p.attachments?.[0]?.type==='video'?'video':'post',
-        reactions:getR(p),comments:getC(p),shares:getS(p),date:dateStr
-      };
+      const d=parseTs(p,FB_TS_FIELDS);
+      let type='post';
+      if(p.type==='video'||p.videoUrl||p.attachments?.[0]?.type==='video') type='video';
+      else if(p.type==='photo'||p.attachments?.[0]?.type==='photo') type='photo';
+      else if(p.type==='event'||p.eventDetails) type='event';
+      return{caption:(p.text||p.message||p.story||p.storyTitle||'(no text)').substring(0,60),
+        type,reactions:getR(p),comments:getC(p),shares:getS(p),
+        date:d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'};
     });
 
   const totalR=totalReactions||1;
-  const reactionTypes={
-    like:Math.floor(totalR*.45),love:Math.floor(totalR*.35),
-    wow:Math.floor(totalR*.1),haha:Math.floor(totalR*.07),
-    sad:Math.floor(totalR*.02),angry:Math.floor(totalR*.01)
-  };
+  const reactionTypes={like:Math.floor(totalR*.45),love:Math.floor(totalR*.35),
+    wow:Math.floor(totalR*.1),haha:Math.floor(totalR*.07),sad:Math.floor(totalR*.02),angry:Math.floor(totalR*.01)};
 
-  // ── STEP 6: Heatmap ──────────────────────────────────────────────────
+  // 6. HEATMAP
   const heatmap=Array.from({length:7},()=>Array(24).fill(0));
   posts.forEach(p=>{
-    const ts=getTs(p);if(!ts)return;
-    const d=new Date(ts);if(isNaN(d))return;
+    const d=parseTs(p,FB_TS_FIELDS);
+    if(!d||isNaN(d))return;
     heatmap[d.getDay()][d.getHours()]+=getR(p)+getC(p);
   });
+  const timeline=buildTimeline(posts.map(p=>{const d=parseTs(p,FB_TS_FIELDS);return{date:d||null,val:getR(p)+getC(p)};}));
 
-  const timeline=buildTimeline(posts.map(p=>{
-    const ts=getTs(p);
-    return{date:ts?new Date(ts):null,val:getR(p)+getC(p)};
-  }));
-
-  return{
-    followers,posts:posts.length,reactions:totalReactions,
-    comments:totalComments,shares:totalShares,engRate,
-    topPosts,reactionTypes,heatmap,timeline,
-    filteredCount:posts.length,totalAvailable:allPosts.length
-  };
+  return{followers,posts:posts.length,reactions:totalReactions,comments:totalComments,shares:totalShares,
+    engRate,topPosts,reactionTypes,heatmap,timeline,filteredCount:posts.length,totalAvailable:allPosts.length};
 }
 
-function processTTData(raw,from,to){
-  if(!raw||!Array.isArray(raw)||raw.length===0)return null;
+function processTTData(raw, from, to){
+  if(!raw||!Array.isArray(raw)||raw.length===0) return null;
 
-  // ── STEP 1: Extract followers ────────────────────────────────────────
-  let followers=0;
+  const TT_TS_FIELDS = ['createTime','createTimeISO','created_at','createTimestamp'];
+
+  // 1. FOLLOWERS — scan entire array
+  let followers = 0;
   raw.forEach(item=>{
-    const candidates=[
-      item.followerCount,
-      item.authorMeta?.fans,
-      item.stats?.followerCount,
-      item.authorStats?.followerCount,
-      item.author?.stats?.followerCount,
-    ];
-    candidates.forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
+    const cands=[item.followerCount,item.authorMeta?.fans,item.stats?.followerCount,
+      item.authorStats?.followerCount,item.author?.stats?.followerCount];
+    cands.forEach(v=>{if(typeof v==='number'&&v>followers)followers=v;});
   });
 
-  // ── STEP 2: Identify videos ──────────────────────────────────────────
-  const allVideos=raw.filter(v=>
-    v.playCount!==undefined||v.diggCount!==undefined||
-    v.statsV2!==undefined||v.stats?.playCount!==undefined
-  );
+  // 2. IDENTIFY VIDEOS
+  const allVideos = raw.filter(v=>v.playCount!==undefined||v.diggCount!==undefined
+    ||v.statsV2!==undefined||v.stats?.playCount!==undefined);
 
-  // ── STEP 3: Strict date filter ───────────────────────────────────────
-  const getTs=v=>{
-    const raw=v.createTime||v.createTimeISO||v.created_at;
-    if(!raw)return null;
-    if(typeof raw==='number')return raw<9999999999?raw*1000:raw;
-    return raw;
-  };
-  const videos=(from||to)?allVideos.filter(v=>{
-    const ts=getTs(v);
-    if(!ts)return false;
-    const d=new Date(ts);
-    if(isNaN(d))return false;
-    if(from&&d<from)return false;
-    if(to&&d>to)return false;
-    return true;
-  }):allVideos;
+  // 3. DATE FILTER — lenient
+  const videos = allVideos.filter(v=>{
+    if(!from&&!to) return true;
+    const d=parseTs(v, TT_TS_FIELDS);
+    return inRange(d, from, to);
+  });
+  if(videos.length===0&&(from||to)) console.log('TT: 0 videos in range. '+allVideos.length+' total.');
 
-  if(videos.length===0&&(from||to))console.warn(`TT: 0 videos in date range. ${allVideos.length} total available.`);
+  // 4. METRICS
+  const getViews   = v=>v.playCount||v.statsV2?.playCount||v.stats?.playCount||0;
+  const getLikes   = v=>v.diggCount||v.statsV2?.diggCount||v.stats?.diggCount||0;
+  const getComments= v=>v.commentCount||v.statsV2?.commentCount||v.stats?.commentCount||0;
+  const getShares  = v=>v.shareCount||v.statsV2?.shareCount||v.stats?.shareCount||0;
+  const totalViews   = videos.reduce((s,v)=>s+getViews(v),0);
+  const totalLikes   = videos.reduce((s,v)=>s+getLikes(v),0);
+  const totalComments= videos.reduce((s,v)=>s+getComments(v),0);
+  const totalShares  = videos.reduce((s,v)=>s+getShares(v),0);
 
-  // ── STEP 4: Metrics ──────────────────────────────────────────────────
-  const getViews=v=>v.playCount||v.statsV2?.playCount||v.stats?.playCount||0;
-  const getLikes=v=>v.diggCount||v.statsV2?.diggCount||v.stats?.diggCount||0;
-  const getComments=v=>v.commentCount||v.statsV2?.commentCount||v.stats?.commentCount||0;
-  const getShares=v=>v.shareCount||v.statsV2?.shareCount||v.stats?.shareCount||0;
-
-  const totalViews=videos.reduce((s,v)=>s+getViews(v),0);
-  const totalLikes=videos.reduce((s,v)=>s+getLikes(v),0);
-  const totalComments=videos.reduce((s,v)=>s+getComments(v),0);
-  const totalShares=videos.reduce((s,v)=>s+getShares(v),0);
-
-  // ── STEP 5: Videos sorted by date (newest first) ─────────────────────
+  // 5. TOP VIDEOS — newest first
   const topPosts=[...videos]
-    .sort((a,b)=>{
-      const ta=new Date(getTs(a)||0).getTime();
-      const tb=new Date(getTs(b)||0).getTime();
-      return tb-ta;
-    })
+    .sort((a,b)=>(parseTs(b,TT_TS_FIELDS)?.getTime()||0)-(parseTs(a,TT_TS_FIELDS)?.getTime()||0))
     .slice(0,30)
     .map(v=>{
-      const ts=getTs(v);
-      const dateStr=ts?new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-      return{
-        caption:(v.text||v.desc||v.title||'').substring(0,60),
-        views:getViews(v),likes:getLikes(v),
-        comments:getComments(v),shares:getShares(v),
-        completion:Math.floor(Math.random()*40+25),date:dateStr
-      };
+      const d=parseTs(v,TT_TS_FIELDS);
+      return{caption:(v.text||v.desc||v.title||'(no caption)').substring(0,60),
+        views:getViews(v),likes:getLikes(v),comments:getComments(v),shares:getShares(v),
+        completion:Math.floor(Math.random()*40+25),
+        date:d?d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'};
     });
 
-  return{followers,videos:videos.length,views:totalViews,likes:totalLikes,comments:totalComments,shares:totalShares,avgDuration:25,topPosts};
+  return{followers,videos:videos.length,views:totalViews,likes:totalLikes,
+    comments:totalComments,shares:totalShares,avgDuration:25,topPosts};
 }
 
 function buildTimeline(pts){
