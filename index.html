@@ -846,6 +846,10 @@ function buildCompInputs(){
         <div class="input-group"><label>IG Avg Likes/post</label><input type="number" id="comp${i}-ig-avg-likes" placeholder="e.g. 210" oninput="saveSettings()"></div>
         <div class="input-group"><label>FB Avg Reactions/post</label><input type="number" id="comp${i}-fb-avg-reactions" placeholder="e.g. 85" oninput="saveSettings()"></div>
       </div>
+      <div class="input-row">
+        <div class="input-group"><label>IG Posts/month</label><input type="number" id="comp${i}-ig-posts" placeholder="e.g. 20" oninput="saveSettings()"></div>
+        <div class="input-group"><label>FB Posts/month</label><input type="number" id="comp${i}-fb-posts" placeholder="e.g. 18" oninput="saveSettings()"></div>
+      </div>
     </div>`).join('');
   syncSettingsToInputs();
 }
@@ -892,7 +896,7 @@ function saveSettings(){
     'gscript-url','actor-ig','actor-fb','actor-tt','actor-fb-profile'];
   ids.forEach(id=>{const el=document.getElementById(id);if(el)appData.settings[id]=el.value;});
   [1,2,3,4].forEach(i=>{
-    ['name','ig-dataset','fb-dataset','ig-handle','ig-followers','fb-followers','ig-avg-likes','fb-avg-reactions'].forEach(f=>{
+    ['name','ig-dataset','fb-dataset','ig-handle','ig-followers','fb-followers','ig-avg-likes','fb-avg-reactions','ig-posts','fb-posts'].forEach(f=>{
       const el=document.getElementById(`comp${i}-${f}`);if(el)appData.settings[`comp${i}-${f}`]=el.value;
     });
   });
@@ -1520,13 +1524,15 @@ function applyCompManual(){
     const fbF=parseInt(document.getElementById(`comp${i}-fb-followers`)?.value)||parseInt(appData.settings[`comp${i}-fb-followers`])||0;
     const igL=parseInt(document.getElementById(`comp${i}-ig-avg-likes`)?.value)||parseInt(appData.settings[`comp${i}-ig-avg-likes`])||0;
     const fbR=parseInt(document.getElementById(`comp${i}-fb-avg-reactions`)?.value)||parseInt(appData.settings[`comp${i}-fb-avg-reactions`])||0;
+    const igP=parseInt(document.getElementById(`comp${i}-ig-posts`)?.value)||parseInt(appData.settings[`comp${i}-ig-posts`])||20;
+    const fbP=parseInt(document.getElementById(`comp${i}-fb-posts`)?.value)||parseInt(appData.settings[`comp${i}-fb-posts`])||18;
     const igEr=igF>0&&igL>0?parseFloat((igL/igF*100).toFixed(2)):0;
     const fbEr=fbF>0&&fbR>0?parseFloat((fbR/fbF*100).toFixed(2)):0;
     if(igF>0||fbF>0){
       appData.comp['c'+i]={
         name,
-        ig:igF>0?{followers:igF,likes:igL*20,comments:0,engRate:igEr,posts:20,topPosts:[]}:null,
-        fb:fbF>0?{followers:fbF,reactions:fbR*18,comments:0,shares:0,engRate:fbEr,posts:18,topPosts:[]}:null
+        ig:igF>0?{followers:igF,likes:igL*igP,comments:0,engRate:igEr,posts:igP,topPosts:[]}:null,
+        fb:fbF>0?{followers:fbF,reactions:fbR*fbP,comments:0,shares:0,engRate:fbEr,posts:fbP,topPosts:[]}:null
       };
     }
   });
@@ -2122,70 +2128,100 @@ function renderHeatmapInline(containerId, heatmap){
 
 
 // ===== MANUAL DATA EDITOR =====
-let _editorCtx = null; // {brand, plat}
+let _editorCtx = null;
 
 function openEditor(brand, plat){
   _editorCtx = {brand, plat};
   const data = appData[brand]?.[plat];
-  const name = brand==='cch'?'CCH':'Cloud Café';
+  const name = brand==='cch'?'CCH':'Cloud Cafe';
   const platLabel = plat==='ig'?'Instagram':plat==='fb'?'Facebook':'TikTok';
-  document.getElementById('editor-title').textContent = `✏ Edit Data — ${name} ${platLabel}`;
+  document.getElementById('editor-title').textContent = 'Edit Data - '+name+' '+platLabel;
 
-  // Build summary fields
+  // Summary: only followers is editable, rest are auto
   const summaryEl = document.getElementById('editor-summary-fields');
-  const fields = editorSummaryFields(plat);
-  summaryEl.innerHTML = fields.map(f=>`
+  const likesLabel = plat==='fb'?'TOTAL REACTIONS':'TOTAL LIKES';
+  const viewsField = plat!=='fb' ? `
     <div class="input-group" style="margin:0">
-      <label style="font-size:9px">${f.label}</label>
-      <input type="${f.type||'number'}" id="ed-sum-${f.key}" value="${data?.[f.key]||0}" style="padding:7px 10px;font-size:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);width:100%;outline:none">
-    </div>`).join('');
+      <label style="font-size:9px">TOTAL VIEWS <span style="color:var(--gold)">(auto)</span></label>
+      <input type="number" id="ed-sum-views" value="${data?data.views||0:0}" readonly
+        style="padding:7px 10px;font-size:12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);width:100%;cursor:not-allowed">
+    </div>` : '';
+  const savesField = plat==='tt' ? `
+    <div class="input-group" style="margin:0">
+      <label style="font-size:9px">TOTAL SAVES <span style="color:var(--gold)">(auto)</span></label>
+      <input type="number" id="ed-sum-saves" value="${data?data.saves||0:0}" readonly
+        style="padding:7px 10px;font-size:12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);width:100%;cursor:not-allowed">
+    </div>` : '';
+  summaryEl.innerHTML = `
+    <div class="input-group" style="margin:0">
+      <label style="font-size:9px">FOLLOWERS</label>
+      <input type="number" id="ed-sum-followers" value="${data?data.followers||0:0}"
+        style="padding:7px 10px;font-size:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);width:100%;outline:none"
+        oninput="editorRecalc()">
+    </div>
+    <div class="input-group" style="margin:0">
+      <label style="font-size:9px">${likesLabel} <span style="color:var(--gold)">(auto)</span></label>
+      <input type="number" id="ed-sum-likes" value="${data?(plat==='fb'?data.reactions||0:data.likes||0):0}" readonly
+        style="padding:7px 10px;font-size:12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);width:100%;cursor:not-allowed">
+    </div>
+    <div class="input-group" style="margin:0">
+      <label style="font-size:9px">TOTAL COMMENTS <span style="color:var(--gold)">(auto)</span></label>
+      <input type="number" id="ed-sum-comments" value="${data?data.comments||0:0}" readonly
+        style="padding:7px 10px;font-size:12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);width:100%;cursor:not-allowed">
+    </div>
+    <div class="input-group" style="margin:0">
+      <label style="font-size:9px">ENG RATE % <span style="color:var(--gold)">(auto)</span></label>
+      <input type="number" id="ed-sum-engRate" value="${data?data.engRate||0:0}" readonly
+        style="padding:7px 10px;font-size:12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);width:100%;cursor:not-allowed">
+    </div>
+    ${viewsField}${savesField}
+    <div style="grid-column:1/-1;font-size:10px;color:var(--muted);padding:4px 0">Only Followers needs manual entry. All totals and Eng Rate auto-calculate from posts below.</div>`;
 
-  // Build posts table
-  buildEditorTable(plat, data?.topPosts||[]);
+  buildEditorTable(plat, data?data.topPosts||[]:[]);
   document.getElementById('editor-modal').classList.add('open');
+  setTimeout(editorRecalc, 50);
 }
 
-function editorSummaryFields(plat){
-  if(plat==='ig') return [
-    {key:'followers',label:'Followers'},{key:'likes',label:'Total Likes'},
-    {key:'comments',label:'Total Comments'},{key:'views',label:'Total Views'},
-    {key:'shares',label:'Total Shares'},{key:'engRate',label:'Eng Rate %',type:'number'}
-  ];
-  if(plat==='fb') return [
-    {key:'followers',label:'Followers'},{key:'reactions',label:'Total Reactions'},
-    {key:'comments',label:'Total Comments'},{key:'shares',label:'Total Shares'},
-    {key:'posts',label:'Post Count'},{key:'engRate',label:'Eng Rate %',type:'number'}
-  ];
-  // tt
-  return [
-    {key:'followers',label:'Followers'},{key:'views',label:'Total Views'},
-    {key:'likes',label:'Total Likes'},{key:'comments',label:'Total Comments'},
-    {key:'shares',label:'Total Shares'},{key:'saves',label:'Total Saves'}
-  ];
+function editorRecalc(){
+  if(!_editorCtx) return;
+  const plat = _editorCtx.plat;
+  const rows = editorReadRows(plat);
+  const followers = parseFloat(document.getElementById('ed-sum-followers')?document.getElementById('ed-sum-followers').value:0)||0;
+  const totalLikes    = rows.reduce((s,r)=>s+(r.likes||r.reactions||0),0);
+  const totalComments = rows.reduce((s,r)=>s+(r.comments||0),0);
+  const totalViews    = rows.reduce((s,r)=>s+(r.views||0),0);
+  const totalSaves    = rows.reduce((s,r)=>s+(r.saves||0),0);
+  const avgEng = rows.length>0?(totalLikes+totalComments)/rows.length:0;
+  const engRate = followers>0&&rows.length>0?parseFloat((avgEng/followers*100).toFixed(2)):0;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  set('ed-sum-likes',totalLikes);
+  set('ed-sum-comments',totalComments);
+  set('ed-sum-engRate',engRate);
+  if(plat!=='fb') set('ed-sum-views',totalViews);
+  if(plat==='tt') set('ed-sum-saves',totalSaves);
 }
 
 function editorColDefs(plat){
   if(plat==='ig') return [
-    {key:'caption',label:'Caption',type:'text',w:'220px'},
+    {key:'caption',label:'Caption',type:'text',w:'200px'},
     {key:'type',label:'Type',type:'select',opts:['photo','reel','carousel'],w:'90px'},
-    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'120px'},
+    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'130px'},
     {key:'likes',label:'Likes',type:'number',w:'70px'},
     {key:'comments',label:'Comments',type:'number',w:'80px'},
     {key:'views',label:'Views',type:'number',w:'70px'},
     {key:'shares',label:'Shares',type:'number',w:'70px'},
   ];
   if(plat==='fb') return [
-    {key:'caption',label:'Caption',type:'text',w:'220px'},
+    {key:'caption',label:'Caption',type:'text',w:'200px'},
     {key:'type',label:'Type',type:'select',opts:['post','video','photo','event'],w:'90px'},
-    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'120px'},
+    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'130px'},
     {key:'reactions',label:'Reactions',type:'number',w:'80px'},
     {key:'comments',label:'Comments',type:'number',w:'80px'},
     {key:'shares',label:'Shares',type:'number',w:'70px'},
   ];
-  // tt
   return [
-    {key:'caption',label:'Caption',type:'text',w:'220px'},
-    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'120px'},
+    {key:'caption',label:'Caption',type:'text',w:'200px'},
+    {key:'date',label:'Date (DD MMM YYYY)',type:'text',w:'130px'},
     {key:'views',label:'Views',type:'number',w:'70px'},
     {key:'likes',label:'Likes',type:'number',w:'70px'},
     {key:'comments',label:'Comments',type:'number',w:'70px'},
@@ -2197,173 +2233,149 @@ function editorColDefs(plat){
 
 function buildEditorTable(plat, posts){
   const cols = editorColDefs(plat);
-  const thead = document.getElementById('editor-thead');
-  const tbody = document.getElementById('editor-tbody');
-  thead.innerHTML = '<tr>' + cols.map(c=>`<th style="min-width:${c.w};white-space:nowrap">${c.label}</th>`).join('') + '<th style="width:40px"></th></tr>';
-  tbody.innerHTML = '';
-  posts.forEach((p,i) => appendEditorRow(cols, p, i));
-  if(posts.length===0) appendEditorRow(cols, {}, 0);
+  document.getElementById('editor-thead').innerHTML = '<tr>'+cols.map(c=>'<th style="min-width:'+c.w+';white-space:nowrap">'+c.label+'</th>').join('')+'<th style="width:40px"></th></tr>';
+  document.getElementById('editor-tbody').innerHTML = '';
+  posts.forEach((p,i)=>appendEditorRow(cols,p,i));
+  if(posts.length===0) appendEditorRow(cols,{type:plat==='tt'?'video':plat==='ig'?'photo':'post'},0);
 }
 
 function appendEditorRow(cols, data, idx){
   const tbody = document.getElementById('editor-tbody');
   const tr = document.createElement('tr');
   tr.dataset.idx = idx;
+  const numKeys = ['likes','comments','views','shares','saves','reactions'];
+  const s = 'background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:4px 6px;border-radius:4px;font-size:11px;font-family:var(--font);width:100%';
   tr.innerHTML = cols.map(col=>{
-    const val = data[col.key]!==undefined ? data[col.key] : '';
+    const val = data[col.key]!==undefined?data[col.key]:'';
     if(col.type==='select'){
-      const opts = col.opts.map(o=>`<option value="${o}"${val===o?' selected':''}>${o}</option>`).join('');
-      return `<td><select data-key="${col.key}" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:4px 6px;border-radius:4px;font-size:11px;font-family:var(--font);width:100%">${opts}</select></td>`;
+      const opts = col.opts.map(o=>'<option value="'+o+'"'+(val===o?' selected':'')+'>'+o+'</option>').join('');
+      return '<td><select data-key="'+col.key+'" style="'+s+'" onchange="editorRecalc()">'+opts+'</select></td>';
     }
-    return `<td><input type="${col.type}" data-key="${col.key}" value="${String(val).replace(/"/g,'&quot;')}" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:4px 6px;border-radius:4px;font-size:11px;font-family:var(--font);width:100%;min-width:${col.w}"></td>`;
-  }).join('') + `<td><button onclick="this.closest('tr').remove()" style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);color:var(--crimson-bright);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">✕</button></td>`;
+    const ev = numKeys.includes(col.key)?' oninput="editorRecalc()"':'';
+    const v = String(val).replace(/"/g,'&quot;');
+    return '<td><input type="'+col.type+'" data-key="'+col.key+'" value="'+v+'"'+ev+' style="'+s+';min-width:'+col.w+'"></td>';
+  }).join('') + '<td><button onclick="editorDeleteRow(this)" style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);color:var(--crimson-bright);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">x</button></td>';
   tbody.appendChild(tr);
 }
 
 function editorAddRow(){
   if(!_editorCtx) return;
-  const cols = editorColDefs(_editorCtx.plat);
+  const plat = _editorCtx.plat;
   const tbody = document.getElementById('editor-tbody');
-  const idx = tbody.rows.length;
-  appendEditorRow(cols, {type: _editorCtx.plat==='tt'?'video':_editorCtx.plat==='ig'?'photo':'post'}, idx);
-  // Scroll to bottom
-  tbody.closest('div').scrollTop = 9999;
+  appendEditorRow(editorColDefs(plat),{type:plat==='tt'?'video':plat==='ig'?'photo':'post'},tbody.rows.length);
+  tbody.closest('div').scrollTop=9999;
+}
+
+function editorDeleteRow(btn){
+  btn.closest('tr').remove();
+  editorRecalc();
+}
+
+function editorReadRows(plat){
+  const numKeys=['likes','comments','views','shares','saves','reactions'];
+  const rows=[];
+  document.querySelectorAll('#editor-tbody tr').forEach(tr=>{
+    const row={};
+    tr.querySelectorAll('[data-key]').forEach(el=>{
+      const k=el.dataset.key;
+      row[k]=numKeys.includes(k)?(parseFloat(el.value)||0):el.value;
+    });
+    if(row.caption||row.views>0||row.likes>0||row.reactions>0) rows.push(row);
+  });
+  return rows;
 }
 
 function editorSave(){
   if(!_editorCtx) return;
   const {brand, plat} = _editorCtx;
+  const existing = appData[brand][plat]||{};
+  const followers = parseFloat(document.getElementById('ed-sum-followers')?document.getElementById('ed-sum-followers').value:0)||0;
+  const rows = editorReadRows(plat);
 
-  // Read summary fields
-  const fields = editorSummaryFields(plat);
-  const summary = {};
-  fields.forEach(f=>{
-    const el = document.getElementById('ed-sum-'+f.key);
-    summary[f.key] = f.type==='number'||!f.type ? (parseFloat(el?.value)||0) : (el?.value||'');
-  });
+  // Auto-calculate all totals
+  const totalLikes    = rows.reduce((s,r)=>s+(r.likes||r.reactions||0),0);
+  const totalComments = rows.reduce((s,r)=>s+(r.comments||0),0);
+  const totalViews    = rows.reduce((s,r)=>s+(r.views||0),0);
+  const totalShares   = rows.reduce((s,r)=>s+(r.shares||0),0);
+  const totalSaves    = rows.reduce((s,r)=>s+(r.saves||0),0);
+  const avgEng = rows.length>0?(totalLikes+totalComments)/rows.length:0;
+  const engRate = followers>0&&rows.length>0?parseFloat((avgEng/followers*100).toFixed(2)):existing.engRate||0;
 
-  // Read post rows
-  const cols = editorColDefs(plat);
-  const rows = [];
-  document.querySelectorAll('#editor-tbody tr').forEach(tr=>{
-    const row = {};
-    tr.querySelectorAll('[data-key]').forEach(el=>{
-      const k = el.dataset.key;
-      const numKeys = ['likes','comments','views','shares','saves','reactions','duration_s'];
-      row[k] = numKeys.includes(k) ? (parseFloat(el.value)||0) : el.value;
-    });
-    // Only add row if it has a caption or views > 0
-    if(row.caption||row.views>0||row.likes>0||row.reactions>0) rows.push(row);
-  });
+  const newData = {...existing};
+  newData.followers = followers;
+  newData.topPosts  = rows;
+  newData.posts     = rows.length;
+  newData.videos    = plat==='tt'?rows.length:undefined;
+  newData.engRate   = engRate;
+  newData.comments  = totalComments;
+  newData.shares    = totalShares;
+  if(plat==='ig'){newData.likes=totalLikes;newData.views=totalViews;}
+  if(plat==='fb'){newData.reactions=totalLikes;}
+  if(plat==='tt'){newData.views=totalViews;newData.likes=totalLikes;newData.saves=totalSaves;}
 
-  // Rebuild the data object preserving non-edited fields
-  const existing = appData[brand][plat] || {};
-
-  // Recalculate totals from rows
-  const newData = {...existing, ...summary};
-  newData.topPosts = rows;
-  newData.posts = plat==='tt' ? rows.length : (summary.posts||rows.length);
-  newData.videos = plat==='tt' ? rows.length : undefined;
-
-  // Recalculate engRate if followers > 0
-  if(newData.followers > 0 && rows.length > 0){
-    let totalEng = 0;
-    rows.forEach(r => totalEng += (r.likes||r.reactions||0) + (r.comments||0));
-    const avgEng = totalEng / rows.length;
-    newData.engRate = parseFloat((avgEng / newData.followers * 100).toFixed(2));
-    // Update the engRate field in the modal to reflect new calc
-    const erEl = document.getElementById('ed-sum-engRate');
-    if(erEl) erEl.value = newData.engRate;
-  }
-
-  // Recalculate postTypes for IG
+  // Post type breakdowns
   if(plat==='ig'){
-    newData.postTypes = {photo:0, reel:0, carousel:0};
-    rows.forEach(r=>{ if(newData.postTypes[r.type]!==undefined) newData.postTypes[r.type]++; });
+    newData.postTypes={photo:0,reel:0,carousel:0};
+    rows.forEach(r=>{if(newData.postTypes[r.type]!==undefined)newData.postTypes[r.type]++;});
   }
-
-  // Recalculate postTypeCounts for FB
   if(plat==='fb'){
-    newData.postTypeCounts = {video:0, photo:0, post:0, event:0};
-    rows.forEach(r=>{ if(newData.postTypeCounts[r.type]!==undefined) newData.postTypeCounts[r.type]++; });
-    newData.reactions = summary.reactions || rows.reduce((s,r)=>s+(r.reactions||0),0);
-    // Recalculate reaction types from total
-    const tR = newData.reactions||1;
-    newData.reactionTypes = {like:Math.floor(tR*.45),love:Math.floor(tR*.35),wow:Math.floor(tR*.1),haha:Math.floor(tR*.07),sad:Math.floor(tR*.02),angry:Math.floor(tR*.01)};
+    newData.postTypeCounts={video:0,photo:0,post:0,event:0};
+    rows.forEach(r=>{if(newData.postTypeCounts[r.type]!==undefined)newData.postTypeCounts[r.type]++;});
+    const tR=totalLikes||1;
+    newData.reactionTypes={like:Math.floor(tR*.45),love:Math.floor(tR*.35),wow:Math.floor(tR*.1),haha:Math.floor(tR*.07),sad:Math.floor(tR*.02),angry:Math.floor(tR*.01)};
   }
 
-  // Recalculate TT totals
-  if(plat==='tt'){
-    newData.views = summary.views || rows.reduce((s,r)=>s+(r.views||0),0);
-    newData.likes = summary.likes || rows.reduce((s,r)=>s+(r.likes||0),0);
-    newData.comments = summary.comments || rows.reduce((s,r)=>s+(r.comments||0),0);
-    newData.shares = summary.shares || rows.reduce((s,r)=>s+(r.shares||0),0);
-    newData.saves = summary.saves || rows.reduce((s,r)=>s+(r.saves||0),0);
-  }
-
-  // Rebuild timeline from dated rows
-  const datedRows = rows.filter(r=>r.date).map(r=>{
-    const d = parseEditorDate(r.date);
-    return {date:d, val:(r.likes||r.reactions||0)+(r.comments||0)};
-  }).filter(r=>r.date);
-  if(datedRows.length > 0) newData.timeline = buildTimeline(datedRows);
-
-  // Rebuild heatmap from dated rows
-  if(datedRows.length > 0){
-    const heatmap = Array.from({length:7},()=>Array(24).fill(0));
-    datedRows.forEach(r=>{ if(r.date) heatmap[r.date.getDay()][r.date.getHours()] += r.val; });
-    newData.heatmap = heatmap;
-  }
-
-  // Rebuild hashtags for IG
-  if(plat==='ig'){
-    const hashMap = {};
+  // Hashtags — rebuild from captions, preserve existing if none found
+  if(plat==='ig'||plat==='fb'){
+    const hashMap={};
     rows.forEach(r=>{
-      const tags = (r.caption||'').match(/#\w+/g)||[];
-      tags.forEach(t=>{ hashMap[t]=(hashMap[t]||0)+(r.likes||0); });
+      const tags=(r.caption||'').match(/#\w+/g)||[];
+      tags.forEach(t=>{hashMap[t]=(hashMap[t]||0)+(r.likes||r.reactions||0);});
     });
-    newData.hashtags = Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+    const newTags=Object.entries(hashMap).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).slice(0,20);
+    newData.hashtags = newTags.length>0 ? newTags : (existing.hashtags||[]);
   }
 
-  // Save
-  appData[brand][plat] = newData;
-  // Also update monthly history for current month
-  const mk = getCurrentMonthKey();
-  if(!appData[brand].months[mk]) appData[brand].months[mk] = {scannedAt:new Date().toISOString(),period:'Manual edit'};
-  appData[brand].months[mk][plat] = newData;
-  appData[brand].months[mk].scannedAt = new Date().toISOString();
+  // Timeline from dated posts
+  const datedRows=rows.map(r=>({date:parseEditorDate(r.date),val:(r.likes||r.reactions||0)+(r.comments||0)})).filter(r=>r.date);
+  newData.timeline = datedRows.length>0 ? buildTimeline(datedRows) : (existing.timeline||{labels:[],values:[]});
 
+  // Heatmap: preserve Apify heatmap if manual entries have no time component (all midnight)
+  if(datedRows.length>0){
+    const allMidnight=datedRows.every(r=>r.date.getHours()===0&&r.date.getMinutes()===0);
+    if(allMidnight&&existing.heatmap){
+      newData.heatmap=existing.heatmap; // keep Apify heatmap
+    } else {
+      const hm=Array.from({length:7},()=>Array(24).fill(0));
+      datedRows.forEach(r=>{hm[r.date.getDay()][r.date.getHours()]+=r.val;});
+      newData.heatmap=hm;
+    }
+  } else {
+    newData.heatmap=existing.heatmap||null;
+  }
+
+  appData[brand][plat]=newData;
+  const mk=getCurrentMonthKey();
+  if(!appData[brand].months[mk])appData[brand].months[mk]={scannedAt:new Date().toISOString(),period:'Manual edit'};
+  appData[brand].months[mk][plat]=newData;
+  appData[brand].months[mk].scannedAt=new Date().toISOString();
   saveToStorage();
 
-  // Re-render the relevant pages
-  if(brand==='cch'){
-    renderCCHOverview();
-    if(plat==='ig') renderCCHInstagram();
-    if(plat==='fb') renderCCHFacebook();
-    if(plat==='tt') renderCCHTikTok();
-  } else {
-    renderCCOverview();
-    if(plat==='ig') renderCCInstagram();
-    if(plat==='fb') renderCCFacebook();
-  }
+  if(brand==='cch'){renderCCHOverview();if(plat==='ig')renderCCHInstagram();if(plat==='fb')renderCCHFacebook();if(plat==='tt')renderCCHTikTok();}
+  else{renderCCOverview();if(plat==='ig')renderCCInstagram();if(plat==='fb')renderCCFacebook();}
 
   closeModal('editor-modal');
-  showToast('✅ Data saved & all charts recalculated!');
+  showToast('Data saved & all charts recalculated!');
 }
 
 function parseEditorDate(str){
-  if(!str) return null;
-  // Try DD MMM YYYY
-  const d = new Date(str);
-  if(!isNaN(d)) return d;
-  // Try DD/MM/YYYY
-  const parts = str.split(/[\/\-]/);
-  if(parts.length===3){
-    const d2 = new Date(`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`);
-    if(!isNaN(d2)) return d2;
-  }
+  if(!str)return null;
+  const d=new Date(str);if(!isNaN(d))return d;
+  const p=str.split(/[\/\-]/);
+  if(p.length===3){const d2=new Date(p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'));if(!isNaN(d2))return d2;}
   return null;
 }
+
 
 // ===== HEATMAP REFRESH =====
 function refreshHeatmap(){
