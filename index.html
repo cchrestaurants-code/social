@@ -674,12 +674,16 @@ nav{flex:1;padding:6px 0;}
     </div>
     <div class="card mb-22">
       <div class="section-head"><div class="section-title">Data Management</div></div>
+      <div style="background:rgba(139,26,26,.1);border:1px solid rgba(139,26,26,.3);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--text2)">
+        <strong style="color:var(--gold)">Two-person workflow:</strong> Always <strong>Pull Full Backup</strong> before starting work · Always <strong>Push Full Backup</strong> when done · Whoever pushes last is the master copy.
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-green" onclick="exportExcel()">↓ Export All as Excel</button>
-        <button class="btn btn-gold" onclick="pushToGsheet(false)">⇪ Push to Google Sheets</button>
-        <button class="btn" style="background:rgba(212,175,55,.15);border-color:var(--gold);color:var(--gold)" onclick="pullFromGsheet()">⇩ Pull from Google Sheets</button>
-        <button class="btn" onclick="exportJSON()">↓ Export JSON Backup</button>
-        <button class="btn btn-gold" onclick="document.getElementById('import-json-input').click()">↑ Import JSON Backup</button>
+        <button class="btn btn-crimson" style="padding:9px 18px;font-size:12px" onclick="pushFullBackup()">⇪ Push Full Backup</button>
+        <button class="btn btn-green" style="padding:9px 18px;font-size:12px" onclick="pullFullBackup()">⇩ Pull Full Backup</button>
+        <button class="btn btn-green" onclick="exportExcel()">↓ Export Excel</button>
+        <button class="btn btn-gold" onclick="pushToGsheet(false)">↑ Push Summary Rows</button>
+        <button class="btn" onclick="exportJSON()">↓ Export JSON</button>
+        <button class="btn" onclick="document.getElementById('import-json-input').click()">↑ Import JSON</button>
         <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importJSON(this)">
         <button class="btn" style="color:var(--crimson-bright);border-color:var(--crimson)" onclick="if(confirm('Clear ALL saved data?'))clearAllData()">Clear All Data</button>
       </div>
@@ -708,50 +712,87 @@ nav{flex:1;padding:6px 0;}
 <div class="modal-overlay" id="gsheet-modal">
   <div class="modal">
     <h3>⇪ Google Sheets Sync <button class="modal-close" onclick="closeModal('gsheet-modal')">×</button></h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Push data to Sheets after every scan. Anyone on another computer can then click <strong style="color:var(--green-light)">Load from Sheets</strong> to restore all monthly history into their browser.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Full two-way sync. <strong style="color:var(--gold)">Push Full Backup</strong> saves everything (all posts, charts, history) to Sheets. <strong style="color:var(--green-light)">Pull Full Backup</strong> restores it completely on any device. Always Pull before you start work, always Push when you finish.</p>
     <div class="input-group"><label>Apps Script Web App URL</label><input type="text" id="gsheet-url-modal" placeholder="https://script.google.com/macros/s/.../exec" oninput="document.getElementById('gscript-url').value=this.value;saveSettings()"></div>
     <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin:12px 0;font-size:11px;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--gold);display:block;margin-bottom:6px">📋 Setup (do this once — or redeploy if you had the old script):</strong>
+      <strong style="color:var(--gold);display:block;margin-bottom:6px">📋 Setup — replace your existing Apps Script with this new version:</strong>
       1. Open your Google Sheet → Extensions → Apps Script<br>
-      2. Replace ALL existing code with the script below → Save<br>
+      2. Select all existing code → Delete → paste the script below → Save<br>
       3. Click Deploy → <strong style="color:var(--text)">New Deployment</strong> (not Update) → Web App<br>
       4. Execute as: <strong style="color:var(--text)">Me</strong> · Who has access: <strong style="color:var(--text)">Anyone</strong><br>
-      5. Copy the new Web App URL → paste in the field above<br>
-      6. <strong style="color:var(--gold)">↑ Push</strong> saves your data to Sheets · <strong style="color:var(--gold)">↓ Load</strong> restores it to any browser<br><br>
-      <strong style="color:var(--gold)">Apps Script — paste this (supports both read and write):</strong>
+      5. Copy the new Web App URL → paste above → share same URL with your staff<br>
+      6. Rule: <strong style="color:var(--gold)">Pull before working · Push after finishing</strong><br><br>
+      <strong style="color:var(--gold)">New Apps Script (paste this, replacing everything):</strong>
       <div style="background:var(--bg2);border-radius:4px;padding:10px;margin-top:6px;font-family:monospace;font-size:10px;color:var(--green-light);overflow-x:auto;white-space:pre">function doPost(e){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
-  var sheet=ss.getSheetByName('SocialData');
-  if(!sheet)sheet=ss.insertSheet('SocialData');
   var payload=JSON.parse(e.postData.contents);
-  if(sheet.getLastRow()===0){
-    sheet.appendRow(payload.headers);
-    var hRange=sheet.getRange(1,1,1,payload.headers.length);
-    hRange.setBackground('#1a1a1a');
-    hRange.setFontColor('#D4AF37');
-    hRange.setFontWeight('bold');
+
+  // Full backup — store complete JSON in FullBackup sheet
+  if(payload.action==='fullBackup'){
+    var fb=ss.getSheetByName('FullBackup');
+    if(!fb)fb=ss.insertSheet('FullBackup');
+    fb.clearContents();
+    fb.getRange(1,1).setValue(payload.timestamp);
+    fb.getRange(2,1).setValue(payload.data);
+    fb.getRange(1,2).setValue('Last updated by: '+payload.updatedBy);
+    return ContentService
+      .createTextOutput(JSON.stringify({status:'ok'}))
+      .setMimeType(ContentService.MimeType.JSON);
   }
-  payload.rows.forEach(function(row){sheet.appendRow(row);});
-  return ContentService
-    .createTextOutput(JSON.stringify({status:'ok',rows:payload.rows.length}))
+
+  // Summary rows — store in SocialData sheet (for reporting)
+  if(payload.action==='appendRows'){
+    var sheet=ss.getSheetByName('SocialData');
+    if(!sheet)sheet=ss.insertSheet('SocialData');
+    if(sheet.getLastRow()===0){
+      sheet.appendRow(payload.headers);
+      var h=sheet.getRange(1,1,1,payload.headers.length);
+      h.setBackground('#1a1a1a');h.setFontColor('#D4AF37');h.setFontWeight('bold');
+    }
+    payload.rows.forEach(function(r){sheet.appendRow(r);});
+    return ContentService
+      .createTextOutput(JSON.stringify({status:'ok',rows:payload.rows.length}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({status:'unknown action'}))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet(e){
   var ss=SpreadsheetApp.getActiveSpreadsheet();
+  var action=e?e.parameter.action:'';
+
+  // Pull full backup
+  if(action==='fullBackup'){
+    var fb=ss.getSheetByName('FullBackup');
+    if(!fb)return ContentService.createTextOutput(JSON.stringify({status:'empty'}))
+      .setMimeType(ContentService.MimeType.JSON);
+    var ts=fb.getRange(1,1).getValue();
+    var data=fb.getRange(2,1).getValue();
+    var who=fb.getRange(1,2).getValue();
+    return ContentService
+      .createTextOutput(JSON.stringify({status:'ok',timestamp:ts,data:data,updatedBy:who}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Pull summary rows (legacy)
   var sheet=ss.getSheetByName('SocialData');
-  if(!sheet)return ContentService.createTextOutput(JSON.stringify({rows:[]})).setMimeType(ContentService.MimeType.JSON);
-  var data=sheet.getDataRange().getValues();
-  var headers=data[0];
-  var rows=data.slice(1).filter(function(r){return r[0]!='';});
+  if(!sheet)return ContentService.createTextOutput(JSON.stringify({rows:[]}))
+    .setMimeType(ContentService.MimeType.JSON);
+  var d=sheet.getDataRange().getValues();
+  var rows=d.slice(1).filter(function(r){return r[0]!='';});
   return ContentService
-    .createTextOutput(JSON.stringify({headers:headers,rows:rows}))
+    .createTextOutput(JSON.stringify({headers:d[0],rows:rows}))
     .setMimeType(ContentService.MimeType.JSON);
 }</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="pushToGsheet(false)">↑ Push Data Now</button>
-      <button class="btn btn-green" style="flex:1;padding:10px" onclick="loadFromGsheet()">↓ Load from Sheets</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-crimson" style="flex:1;padding:10px;font-size:12px" onclick="pushFullBackup()">⇪ Push Full Backup</button>
+      <button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="pullFullBackup()">⇩ Pull Full Backup</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-gold" style="flex:1;padding:9px;font-size:11px" onclick="pushToGsheet(false)">↑ Push Summary Rows</button>
       <button class="btn" onclick="testGsheet()">Test</button>
       <button class="btn" onclick="closeModal('gsheet-modal')">Cancel</button>
     </div>
@@ -1936,112 +1977,121 @@ function importJSON(input){
 }
 
 async function pullFromGsheet(){
-  if(!confirm('Pull data from Google Sheets?\n\nThis will merge Sheets data into your dashboard. Your existing local data will be kept — Sheets data will be added on top.\n\nMake sure your Apps Script has the doGet function (see the Sheets modal in Settings).'))return;
-  await loadFromGsheet();
+  await pullFullBackup();
 }
 
-async function loadFromGsheet(){
+// ===== FULL BACKUP PUSH =====
+async function pushFullBackup(){
   const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
-  if(!url){showToast('⚠ Set your Apps Script URL in Google Sheets Sync first');return;}
-  showToast('⏳ Loading data from Google Sheets...');
+  if(!url){openGsheetModal();showToast('⚠ Set your Apps Script URL first');return;}
+  const who=appData.settings['pushedBy']||(prompt('Your name (so your colleague knows who last updated):')||'Unknown');
+  if(!who)return;
+  appData.settings['pushedBy']=who;
+  showToast('⏳ Pushing full backup to Sheets...');
+  // Strip settings passwords before sending
+  const dataToSave=JSON.parse(JSON.stringify(appData));
+  delete dataToSave.settings['cch-api-token'];
+  delete dataToSave.settings['cc-api-token'];
   try{
-    // Call the Apps Script doGet endpoint to read data back
-    const resp=await fetch(url+'?action=read');
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
-    if(!data||!data.rows||data.rows.length===0){showToast('⚠ No data found in Sheet');return;}
-    // Rebuild monthly history from sheet rows
-    // Expected columns: Month, Brand, Platform, Followers, Likes/Reactions, Comments, Shares, Posts, Eng Rate %, Period, Date
-    let imported=0;
-    data.rows.forEach(row=>{
-      const[month,brand,platform,followers,likes,comments,shares,posts,engRate,period]=row;
-      if(!month||!brand||!platform)return;
-      const b=brand.toLowerCase().includes('cloud')?'cc':'cch';
-      const p=platform.toLowerCase().includes('insta')?'ig':platform.toLowerCase().includes('face')?'fb':platform.toLowerCase().includes('tik')?'tt':null;
-      if(!p)return;
-      if(!appData[b].months[month])appData[b].months[month]={scannedAt:new Date().toISOString(),period:period||month};
-      appData[b].months[month][p]={
-        followers:parseInt(followers)||0,
-        likes:parseInt(likes)||0,reactions:parseInt(likes)||0,
-        comments:parseInt(comments)||0,
-        shares:parseInt(shares)||0,
-        posts:parseInt(posts)||0,videos:parseInt(posts)||0,
-        engRate:parseFloat(engRate)||0,
-        topPosts:[],heatmap:null,timeline:{labels:[],values:[]}
-      };
-      imported++;
+    await fetch(url,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        action:'fullBackup',
+        timestamp:new Date().toISOString(),
+        updatedBy:who,
+        data:JSON.stringify(dataToSave)
+      })
     });
+    appData.settings.lastPushed=new Date().toISOString();
     saveToStorage();
-    renderIfDataExists();
-    showToast('✅ Loaded '+imported+' records from Google Sheets!');
-  }catch(err){
-    // If doGet not set up, guide the user
-    showToast('⚠ Could not read from Sheets. Update your Apps Script with the new doGet function — see Settings info.');
-    console.error('Sheets load error:',err);
+    showToast('✅ Full backup pushed! Your colleague can now Pull to get your latest data.');
+    closeModal('gsheet-modal');
+  }catch(e){
+    showToast('❌ Push failed: '+e.message);
   }
 }
 
+// ===== FULL BACKUP PULL =====
+async function pullFullBackup(){
+  const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
+  if(!url){openGsheetModal();showToast('⚠ Set your Apps Script URL first');return;}
+  showToast('⏳ Pulling full backup from Sheets...');
+  try{
+    const resp=await fetch(url+'?action=fullBackup');
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const result=await resp.json();
+    if(result.status==='empty'){showToast('⚠ No backup found in Sheets yet. Someone needs to Push first.');return;}
+    if(!result.data){showToast('⚠ Backup data missing — check Apps Script is updated.');return;}
+    const imported=JSON.parse(result.data);
+    // Merge: preserve local settings (API tokens, URL) but take all data
+    const localSettings={...appData.settings};
+    if(imported.cch)appData.cch={...imported.cch};
+    if(imported.cc)appData.cc={...imported.cc};
+    if(imported.comp)appData.comp={...imported.comp};
+    if(imported.settings){
+      appData.settings={...imported.settings,...localSettings};
+    }
+    saveToStorage();
+    syncSettingsToInputs();
+    renderIfDataExists();
+    const when=result.timestamp?new Date(result.timestamp).toLocaleString('en-GB'):'unknown time';
+    showToast('✅ Full backup restored! Last updated by: '+(result.updatedBy||'unknown')+' at '+when);
+    closeModal('gsheet-modal');
+  }catch(e){
+    showToast('❌ Pull failed. Make sure Apps Script is updated with the new version. Error: '+e.message);
+    console.error('Pull error:',e);
+  }
+}
 
 // ===== GOOGLE SHEETS =====
 async function pushToGsheet(silent){
   const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
   if(!url){if(!silent)showToast('⚠ Set your Apps Script URL in Settings first');return;}
-  if(!silent)showToast('⏳ Pushing data to Google Sheets...');
-
-  // Build flat rows — one row per platform per brand
+  if(!silent)showToast('⏳ Pushing summary rows to Google Sheets...');
   const rows=[];
   const mk=getCurrentMonthKey();
   const addRow=(brand,platform,data,period)=>{
     if(!data)return;
-    rows.push([
-      mk,                          // Month
-      brand,                       // Brand
-      platform,                    // Platform
-      data.followers||0,           // Followers
-      data.likes||data.reactions||0, // Likes / Reactions
-      data.comments||0,            // Comments
-      data.shares||0,              // Shares
-      data.posts||data.videos||0,  // Posts / Videos
-      data.engRate||0,             // Eng Rate %
-      period||mk,                  // Period
-      new Date().toLocaleDateString('en-GB') // Pushed Date
-    ]);
+    rows.push([mk,brand,platform,data.followers||0,data.likes||data.reactions||0,
+      data.comments||0,data.shares||0,data.posts||data.videos||0,data.engRate||0,
+      period||mk,new Date().toLocaleDateString('en-GB')]);
   };
   addRow('CCH','Instagram',appData.cch.ig,appData.cch.months[mk]?.period);
   addRow('CCH','Facebook',appData.cch.fb,appData.cch.months[mk]?.period);
   addRow('CCH','TikTok',appData.cch.tt,appData.cch.months[mk]?.period);
   addRow('Cloud Café','Instagram',appData.cc.ig,appData.cc.months[mk]?.period);
   addRow('Cloud Café','Facebook',appData.cc.fb,appData.cc.months[mk]?.period);
-
   if(rows.length===0){if(!silent)showToast('⚠ No data to push — run a scan first');return;}
-
-  // Use fetch with no-cors (Apps Script accepts this).
-  // The "success" message here means the request was sent — 
-  // Apps Script processes it asynchronously. Check your Sheet ~5 seconds after pushing.
   try{
-    await fetch(url,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'text/plain'}, // no-cors requires simple content-type
-      body:JSON.stringify({action:'appendRows',headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],rows})
+    await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'appendRows',
+        headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],
+        rows})
     });
     appData.settings.lastPushed=new Date().toISOString();
     saveToStorage();
-    if(!silent)showToast('✅ Sent to Sheets — check your Sheet in ~5 seconds');
+    if(!silent)showToast('✅ Summary rows sent to Sheets');
     closeModal('gsheet-modal');
-  }catch(e){
-    if(!silent)showToast('❌ Push failed: '+e.message);
-  }
+  }catch(e){if(!silent)showToast('❌ Push failed: '+e.message);}
 }
+
+async function loadFromGsheet(){
+  showToast('Use Pull Full Backup for complete data sync.');
+}
+
 async function testGsheet(){
   const url=(document.getElementById('gscript-url')?.value||appData.settings['gscript-url']||'').trim();
   if(!url){showToast('⚠ Enter your Apps Script URL first');return;}
-  showToast('⏳ Sending test row...');
+  showToast('⏳ Testing connection...');
   try{
     await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'appendRows',headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],rows:[['TEST','-','-',0,0,0,0,0,0,'Test',new Date().toLocaleDateString()]]})
+      body:JSON.stringify({action:'appendRows',
+        headers:['Month','Brand','Platform','Followers','Likes/Reactions','Comments','Shares','Posts','Eng Rate %','Period','Pushed Date'],
+        rows:[['TEST','-','-',0,0,0,0,0,0,'Test',new Date().toLocaleDateString()]]})
     });
-    showToast('✅ Test row sent — check your Sheet in ~5 seconds');
+    showToast('✅ Connection OK — check your Sheet');
   }catch(e){showToast('❌ Could not reach script: '+e.message);}
 }
 function toggleAutoPush(btn){btn.classList.toggle('on');appData.settings.autoPush=btn.classList.contains('on');saveToStorage();showToast(appData.settings.autoPush?'Auto-push ON':'Auto-push OFF');}
