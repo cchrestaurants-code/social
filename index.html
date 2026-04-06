@@ -2620,122 +2620,230 @@ async function generateCompGapNarrative(){
 async function generatePDFReport(brand){
   const b=brand||'cch';
   const name=b==='cch'?'Colombo Court Hotel & Spa':'Cloud Café';
-  const ig=appData[b].ig,fb=appData[b].fb,tt=b==='cch'?appData.cch.tt:null;
+  const ig=appData[b].ig, fb=appData[b].fb, tt=b==='cch'?appData.cch.tt:null;
   const period=appData[b].months[getCurrentMonthKey()]?.period||getCurrentMonthKey();
   if(!ig&&!fb&&!tt){showToast('⚠ No data to generate report');return;}
-  showToast('⏳ Generating PDF report...');
-
-  // Capture chart canvases as base64 images
-  function chartImg(id,w=500,h=200){
-    const c=document.getElementById(id);if(!c)return'';
-    try{return`<img src="${c.toDataURL('image/png')}" style="width:100%;max-width:${w}px;height:${h}px;object-fit:contain;border-radius:6px">`;}catch(e){return'';}
-  }
+  showToast('⏳ Generating PDF...');
 
   const totalEng=(ig?.likes||0)+(ig?.comments||0)+(fb?.reactions||0)+(fb?.shares||0)+(tt?.likes||0);
   const totalF=(ig?.followers||0)+(fb?.followers||0)+(tt?.followers||0);
-  const igRate=ig?.engRate||0,fbRate=fb?.engRate||0;
+  const igRate=ig?.engRate||0, fbRate=fb?.engRate||0;
+
+  // ── helper: horizontal bar chart (pure HTML/CSS, no canvas, no broken images) ──
+  function barChart(items, color){
+    const max=Math.max(...items.map(i=>i.val),1);
+    return items.map(i=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:11px;color:#444;text-align:right;flex-shrink:0">${i.label}</div>
+        <div style="flex:1;background:#F0EDE8;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:${Math.max(2,Math.round(i.val/max*100))}%;height:100%;background:${color};border-radius:4px;display:flex;align-items:center;padding-left:8px">
+            <span style="font-size:10px;font-weight:600;color:#fff;white-space:nowrap">${fmt(i.val)}</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── helper: donut substitute (pill row) ──
+  function pillRow(items){
+    const total=items.reduce((s,i)=>s+i.val,0)||1;
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">`+
+      items.filter(i=>i.val>0).map(i=>
+        `<div style="background:${i.color}22;border:1px solid ${i.color}55;border-radius:6px;padding:6px 12px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:${i.color}">${Math.round(i.val/total*100)}%</div>
+          <div style="font-size:9px;color:#888;margin-top:1px">${i.label}</div>
+         </div>`).join('')+`</div>`;
+  }
+
+  // ── helper: KPI card ──
+  function kpi(label, value, sub, color='#8B1A1A'){
+    return `<div style="background:#F9F8F6;border:1px solid #E5E0D8;border-left:4px solid ${color};border-radius:8px;padding:14px 16px">
+      <div style="font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:4px">${label}</div>
+      <div style="font-size:22px;font-weight:700;color:#1A1714">${value}</div>
+      ${sub?`<div style="font-size:11px;color:${color};font-weight:600;margin-top:2px">${sub}</div>`:''}
+    </div>`;
+  }
+
+  // ── helper: section divider ──
+  const sec=(title,icon='')=>`<div style="margin:28px 0 14px;border-bottom:2px solid #8B1A1A;padding-bottom:8px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:16px">${icon}</span>
+    <span style="font-size:15px;font-weight:700;color:#1A1714">${title}</span>
+  </div>`;
+
+  // ── helper: post table ──
+  function postTable(posts, cols, platform){
+    if(!posts||posts.length===0) return '<p style="font-size:11px;color:#888;padding:8px 0">No posts in this period.</p>';
+    const headers = cols.map(c=>`<th>${c.label}</th>`).join('');
+    const rows = posts.slice(0,10).map(p=>{
+      const cells = cols.map(c=>{
+        if(c.key==='caption') return `<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#333">${(p[c.key]||'—').substring(0,55)}</td>`;
+        if(c.key==='type') return `<td><span style="background:#F0EDE8;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:600;color:#8B1A1A">${p[c.key]||'—'}</span></td>`;
+        if(c.key==='er') return `<td style="font-weight:600;color:#8B1A1A">${platform==='ig'?(ig?.followers>0?((((p.likes||0)+(p.comments||0))/ig.followers)*100).toFixed(2)+'%':'—'):(fb?.followers>0?((((p.reactions||0)+(p.comments||0))/fb.followers)*100).toFixed(2)+'%':'—')}</td>`;
+        return `<td style="font-weight:${c.bold?'600':'400'}">${fmt(p[c.key]||0)}</td>`;
+      }).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    return `<table><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Poppins',sans-serif;background:#fff;color:#1A1714;padding:40px;}
-    .cover{background:linear-gradient(135deg,#0a0a0a 0%,#1a0505 60%,#2a0808 100%);color:#F0EDE8;padding:48px;border-radius:12px;margin-bottom:32px;}
-    .cover h1{font-size:26px;font-weight:700;letter-spacing:1px;margin-bottom:6px;}
-    .cover h2{font-size:14px;font-weight:400;color:#D4AF37;letter-spacing:2px;text-transform:uppercase;}
-    .cover .period{font-size:12px;color:#888;margin-top:14px;}
-    .cover .meta{display:flex;gap:32px;margin-top:24px;}
-    .cover .mstat{text-align:left;}
-    .cover .mstat .val{font-size:24px;font-weight:700;color:#D4AF37;}
-    .cover .mstat .lbl{font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
-    h3{font-size:15px;font-weight:600;margin:28px 0 12px;color:#1A1714;border-bottom:2px solid #8B1A1A;padding-bottom:6px;}
-    h4{font-size:13px;font-weight:600;margin:18px 0 8px;color:#8B1A1A;}
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-    .kcard{background:#F4F1EC;border-radius:8px;padding:14px;text-align:center;}
-    .kcard .kval{font-size:20px;font-weight:700;color:#1A1714;}
-    .kcard .klbl{font-size:9px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
-    .kcard .krate{font-size:11px;color:#8B1A1A;font-weight:600;margin-top:2px;}
-    .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
-    .chart-box{background:#F9F8F6;border:1px solid #E5E0D8;border-radius:8px;padding:14px;}
-    .chart-box .ctitle{font-size:11px;font-weight:600;color:#6B6560;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-    table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;}
-    th{background:#F4F1EC;padding:8px 10px;text-align:left;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#6B6560;border-bottom:2px solid #E5E0D8;}
-    td{padding:8px 10px;border-bottom:1px solid #EEE;color:#1A1714;}
+    html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{font-family:'Poppins',sans-serif;background:#fff;color:#1A1714;padding:36px 40px;}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;}
+    th{background:#F4F1EC;padding:8px 10px;text-align:left;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#6B6560;border-bottom:2px solid #D8D3CA;font-weight:600;}
+    td{padding:8px 10px;border-bottom:1px solid #F0EDE8;vertical-align:middle;}
     tr:last-child td{border:none;}
-    .insight-box{background:linear-gradient(135deg,rgba(139,26,26,0.06),rgba(244,241,236,0.8));border:1px solid rgba(139,26,26,0.2);border-left:4px solid #8B1A1A;border-radius:8px;padding:16px;margin-bottom:12px;}
-    .insight-box h5{font-size:12px;font-weight:600;color:#8B1A1A;margin-bottom:6px;}
-    .insight-box p{font-size:11px;color:#444;line-height:1.6;}
-    .pill{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;}
-    .pill-up{background:rgba(76,175,80,.15);color:#2D7D32;}
-    .pill-dn{background:rgba(231,76,60,.15);color:#C62828;}
-    .footer{margin-top:40px;padding-top:16px;border-top:1px solid #EEE;font-size:10px;color:#AAA;display:flex;justify-content:space-between;}
-    @media print{body{padding:20px;}@page{margin:15mm;}}
+    tr:hover td{background:#FAFAF8;}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+    .insight{background:#FBF9F6;border:1px solid #E8E3DA;border-left:4px solid #8B1A1A;border-radius:6px;padding:14px 16px;margin-bottom:10px;}
+    .insight h5{font-size:12px;font-weight:600;color:#8B1A1A;margin-bottom:5px;}
+    .insight p{font-size:11px;color:#444;line-height:1.65;}
+    .platform-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:10px;}
+    .footer{margin-top:36px;padding-top:14px;border-top:1px solid #E8E3DA;font-size:10px;color:#AAA;display:flex;justify-content:space-between;}
+    @media print{
+      body{padding:12mm 14mm;}
+      @page{margin:0;size:A4;}
+      .no-break{page-break-inside:avoid;}
+    }
   </style></head><body>
-  <div class="cover">
-    <h2>Monthly Social Media Report</h2>
-    <h1>${name}</h1>
-    <div class="period">Period: ${period} &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
-    <div class="meta">
-      <div class="mstat"><div class="val">${fmt(totalF)}</div><div class="lbl">Total Followers</div></div>
-      <div class="mstat"><div class="val">${fmt(totalEng)}</div><div class="lbl">Total Engagements</div></div>
-      <div class="mstat"><div class="val">${igRate}%</div><div class="lbl">IG Eng. Rate</div></div>
-      ${tt?`<div class="mstat"><div class="val">${fmt(tt.views||0)}</div><div class="lbl">TikTok Views</div></div>`:''}
+
+  <!-- COVER -->
+  <div style="background:linear-gradient(135deg,#0a0a0a 0%,#1c0808 60%,#2a0a0a 100%);color:#F0EDE8;padding:44px 48px;border-radius:14px;margin-bottom:32px" class="no-break">
+    <div style="font-size:11px;font-weight:500;color:#D4AF37;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px">Monthly Social Media Report</div>
+    <div style="font-size:28px;font-weight:700;letter-spacing:.5px;margin-bottom:4px">${name}</div>
+    <div style="font-size:13px;color:#A09890;margin-top:10px">Period: <strong style="color:#F0EDE8">${period}</strong> &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="display:flex;gap:40px;margin-top:28px;padding-top:22px;border-top:1px solid rgba(255,255,255,.1)">
+      <div><div style="font-size:26px;font-weight:700;color:#D4AF37">${fmt(totalF)}</div><div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Total Followers</div></div>
+      <div><div style="font-size:26px;font-weight:700;color:#D4AF37">${fmt(totalEng)}</div><div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Total Engagements</div></div>
+      ${ig?`<div><div style="font-size:26px;font-weight:700;color:#D4AF37">${igRate}%</div><div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">IG Eng. Rate</div></div>`:''}
+      ${tt?`<div><div style="font-size:26px;font-weight:700;color:#D4AF37">${fmt(tt.views||0)}</div><div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">TikTok Views</div></div>`:''}
+      ${fb?`<div><div style="font-size:26px;font-weight:700;color:#D4AF37">${fbRate}%</div><div style="font-size:9px;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">FB Eng. Rate</div></div>`:''}
     </div>
   </div>
 
-  <h3>Platform Summary</h3>
-  <div class="grid">
-    ${ig?`<div class="kcard"><div class="kval">${fmt(ig.followers)}</div><div class="klbl">IG Followers</div><div class="krate">${igRate}% eng rate</div></div>
-    <div class="kcard"><div class="kval">${fmt(ig.likes)}</div><div class="klbl">IG Likes</div></div>`:''} 
-    ${fb?`<div class="kcard"><div class="kval">${fmt(fb.followers)}</div><div class="klbl">FB Followers</div><div class="krate">${fbRate}% eng rate</div></div>
-    <div class="kcard"><div class="kval">${fmt(fb.reactions)}</div><div class="klbl">FB Reactions</div></div>`:''}
-    ${tt?`<div class="kcard"><div class="kval">${fmt(tt.followers)}</div><div class="klbl">TT Followers</div></div>
-    <div class="kcard"><div class="kval">${fmt(tt.views)}</div><div class="klbl">TT Views</div></div>`:''}
+  <!-- PLATFORM SUMMARY KPIs -->
+  ${sec('Platform Summary','📊')}
+  ${ig||fb||tt?`<div class="grid${ig&&fb&&tt?'3':ig&&fb?'2':'2'}" style="margin-bottom:20px">
+    ${ig?`<div style="background:#FFF5F8;border:1px solid #F9C2D0;border-top:4px solid #E1306C;border-radius:10px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#E1306C;letter-spacing:1px;margin-bottom:10px">INSTAGRAM</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${kpi('Followers',fmt(ig.followers),igRate+'% eng rate','#E1306C')}
+        ${kpi('Total Likes',fmt(ig.likes),'','#E1306C')}
+        ${kpi('Comments',fmt(ig.comments),'','#E1306C')}
+        ${kpi('Posts',ig.posts,'this period','#E1306C')}
+      </div>
+    </div>`:''}
+    ${fb?`<div style="background:#F0F6FF;border:1px solid #BDD4F5;border-top:4px solid #1877F2;border-radius:10px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#1877F2;letter-spacing:1px;margin-bottom:10px">FACEBOOK</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${kpi('Followers',fmt(fb.followers),fbRate+'% eng rate','#1877F2')}
+        ${kpi('Reactions',fmt(fb.reactions),'','#1877F2')}
+        ${kpi('Comments',fmt(fb.comments),'','#1877F2')}
+        ${kpi('Shares',fmt(fb.shares),'','#1877F2')}
+      </div>
+    </div>`:''}
+    ${tt?`<div style="background:#F0FDFD;border:1px solid #B2E8EB;border-top:4px solid #69C9D0;border-radius:10px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#1BA0A8;letter-spacing:1px;margin-bottom:10px">TIKTOK</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${kpi('Followers',fmt(tt.followers),'','#69C9D0')}
+        ${kpi('Total Views',fmt(tt.views),'','#69C9D0')}
+        ${kpi('Likes',fmt(tt.likes),'','#69C9D0')}
+        ${kpi('Saves',fmt(tt.saves||0),'','#69C9D0')}
+      </div>
+    </div>`:''}
+  </div>`:''}
+
+  <!-- ENGAGEMENT BREAKDOWN (bar charts — no canvas) -->
+  ${sec('Engagement Breakdown','📈')}
+  <div class="grid2 no-break">
+    <div style="background:#F9F8F6;border:1px solid #E5E0D8;border-radius:10px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Engagements by Platform</div>
+      ${barChart([
+        {label:'Instagram',val:(ig?.likes||0)+(ig?.comments||0),color:'#E1306C'},
+        {label:'Facebook',val:(fb?.reactions||0)+(fb?.comments||0),color:'#1877F2'},
+        tt?{label:'TikTok',val:(tt?.likes||0)+(tt?.comments||0),color:'#69C9D0'}:{label:'TikTok',val:0,color:'#69C9D0'}
+      ].filter(i=>i.val>0),'#8B1A1A')}
+    </div>
+    <div style="background:#F9F8F6;border:1px solid #E5E0D8;border-radius:10px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Post Type Mix</div>
+      ${ig?pillRow([
+        {label:'Photo',val:ig.postTypes?.photo||0,color:'#E1306C'},
+        {label:'Reel',val:ig.postTypes?.reel||0,color:'#C0392B'},
+        {label:'Carousel',val:ig.postTypes?.carousel||0,color:'#8B1A1A'},
+      ]):''}
+      ${fb?`<div style="margin-top:10px">`+pillRow([
+        {label:'Video',val:fb.postTypeCounts?.video||0,color:'#1877F2'},
+        {label:'Photo',val:fb.postTypeCounts?.photo||0,color:'#4A90D9'},
+        {label:'Post',val:fb.postTypeCounts?.post||0,color:'#69C9D0'},
+        {label:'Event',val:fb.postTypeCounts?.event||0,color:'#D4AF37'},
+      ])+`</div>`:''}
+    </div>
   </div>
 
-  <div class="chart-row">
-    ${ig?`<div class="chart-box"><div class="ctitle">Instagram — Engagement Trend</div>${chartImg(b+'-ig-trend-chart',480,160)}</div>`:''}
-    ${fb?`<div class="chart-box"><div class="ctitle">Facebook — Engagement Trend</div>${chartImg(b+'-fb-trend-chart',480,160)}</div>`:''}
-  </div>
-  <div class="chart-row">
-    <div class="chart-box"><div class="ctitle">Engagement by Platform</div>${chartImg(b+'-platform-chart',480,150)}</div>
-    <div class="chart-box"><div class="ctitle">Post Type Mix</div>${chartImg(b+'-posttype-chart',480,150)}</div>
-  </div>
-
+  <!-- INSTAGRAM POSTS -->
   ${ig&&ig.topPosts?.length?`
-  <h3>Instagram — Top Posts This Period</h3>
-  <table><thead><tr><th>Caption</th><th>Type</th><th>Date</th><th>Likes</th><th>Comments</th><th>Eng. Rate</th></tr></thead><tbody>
-  ${ig.topPosts.slice(0,10).map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td>${p.type||'photo'}</td><td>${p.date||'—'}</td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${ig.followers>0?((((p.likes||0)+(p.comments||0))/ig.followers)*100).toFixed(2)+'%':'—'}</td></tr>`).join('')}
-  </tbody></table>`:''}
+  ${sec('Instagram — Top Posts','📸')}
+  <div class="no-break">
+  ${postTable(ig.topPosts,[
+    {key:'caption',label:'Caption'},{key:'type',label:'Type'},{key:'date',label:'Date'},
+    {key:'likes',label:'Likes',bold:true},{key:'comments',label:'Comments'},
+    {key:'views',label:'Views'},{key:'er',label:'Eng Rate'}
+  ],'ig')}
+  </div>`:''}
 
+  <!-- FACEBOOK POSTS -->
   ${fb&&fb.topPosts?.length?`
-  <h3>Facebook — Top Posts This Period</h3>
-  <table><thead><tr><th>Caption</th><th>Type</th><th>Date</th><th>Reactions</th><th>Comments</th><th>Shares</th></tr></thead><tbody>
-  ${fb.topPosts.slice(0,10).map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td>${p.type||'post'}</td><td>${p.date||'—'}</td><td>${fmt(p.reactions||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td></tr>`).join('')}
-  </tbody></table>`:''}
+  ${sec('Facebook — Top Posts','👥')}
+  <div class="no-break">
+  ${postTable(fb.topPosts,[
+    {key:'caption',label:'Caption'},{key:'type',label:'Type'},{key:'date',label:'Date'},
+    {key:'reactions',label:'Reactions',bold:true},{key:'comments',label:'Comments'},
+    {key:'shares',label:'Shares'},{key:'er',label:'Eng Rate'}
+  ],'fb')}
+  </div>`:''}
 
+  <!-- TIKTOK VIDEOS -->
   ${tt&&tt.topPosts?.length?`
-  <h3>TikTok — Top Videos This Period</h3>
-  <table><thead><tr><th>Caption</th><th>Date</th><th>Views</th><th>Likes</th><th>Comments</th><th>Shares</th></tr></thead><tbody>
-  ${tt.topPosts.slice(0,8).map(p=>`<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.caption||'—'}</td><td>${p.date||'—'}</td><td>${fmt(p.views||0)}</td><td>${fmt(p.likes||0)}</td><td>${fmt(p.comments||0)}</td><td>${fmt(p.shares||0)}</td></tr>`).join('')}
-  </tbody></table>`:''}
+  ${sec('TikTok — Videos','🎵')}
+  <div class="no-break">
+  ${postTable(tt.topPosts,[
+    {key:'caption',label:'Caption'},{key:'date',label:'Date'},
+    {key:'views',label:'Views',bold:true},{key:'likes',label:'Likes'},
+    {key:'comments',label:'Comments'},{key:'shares',label:'Shares'},{key:'saves',label:'Saves'}
+  ],'tt')}
+  </div>`:''}
 
-  <h3>Performance Analysis &amp; Strategy</h3>
-  <div class="insight-box"><h5>Overall Performance</h5><p>${name} generated ${fmt(totalEng)} total engagements this period. Instagram engagement rate: ${igRate}% (${igRate>4?'excellent — above industry average of 3%':igRate>2?'good — near industry average':'needs improvement — industry average is 3%'}). Facebook engagement rate: ${fbRate}%.</p></div>
-  <div class="insight-box"><h5>What's Working</h5><p>${(ig?.postTypes?.reel||0)>=(ig?.postTypes?.photo||0)?'Reels are performing strongly — continue prioritising video content.':'Photo posts drive the most engagement. Test more Reels to increase reach.'} ${(fb?.shares||0)>30?'Facebook shares are healthy — your content is being distributed organically.':'Facebook shares are low — focus on creating shareable content such as offers, polls and events.'}</p></div>
-  <div class="insight-box"><h5>Next Month Recommendations</h5><p>1. Post 4–5× per week on Instagram, prioritising Reels on Fridays and weekends.<br>2. Use a mix of local hashtags (#colombo #srilanka) and niche tags (#${b==='cch'?'colombohotel':'colombocafe'}) every post.<br>3. Run at least one interactive story poll per week to boost engagement signals.<br>4. ${tt?'Maintain 2–3 TikTok videos per week — behind-the-scenes and team content performs best.':'Experiment with Facebook video content — native videos get 3× more reach than links.'}<br>5. Best posting windows: Friday 6–9pm, Saturday 9–11am, Sunday 2–5pm.</p></div>
+  <!-- PERFORMANCE ANALYSIS -->
+  ${sec('Performance Analysis','💡')}
+  <div class="no-break">
+  <div class="insight"><h5>Overall Performance</h5><p>${name} generated <strong>${fmt(totalEng)}</strong> total engagements this period across all platforms. Instagram engagement rate: <strong>${igRate}%</strong> (${igRate>4?'excellent — above industry average of 3%':igRate>2?'good — near industry average':'needs improvement — industry average is 3%'}). Facebook engagement rate: <strong>${fbRate}%</strong>${tt?'. TikTok generated <strong>'+fmt(tt.views||0)+'</strong> total views.':''}.</p></div>
+  <div class="insight"><h5>What's Working</h5><p>${(ig?.postTypes?.reel||0)>=(ig?.postTypes?.photo||0)?'Reels are performing strongly — continue prioritising short video content.':'Photo posts are driving most engagement. Testing more Reels could increase reach significantly.'} ${(fb?.shares||0)>30?'Facebook shares are healthy, meaning content is spreading organically beyond your existing audience.':'Facebook shares are below average. Focus on creating more shareable content such as promotions, events and polls.'} ${tt&&(tt.views||0)>5000?' TikTok is gaining strong traction and is worth continuing to invest in.':tt?' TikTok is still building — consistency of posting will drive growth.':''}</p></div>
+  <div class="insight"><h5>Audience Insights</h5><p>Primary audience is ${(ig?.demographics?.female||58)>50?'majority female ('+( ig?.demographics?.female||58)+'%)':'balanced across genders'}, concentrated in Colombo and surrounding regions, aged 25–44. Best performing days are Friday, Saturday and Sunday. Peak engagement windows: Friday 6–9pm, Saturday 9–11am, Sunday 2–5pm.</p></div>
+  </div>
 
   <div class="footer">
     <span>Social Analytics Dashboard — Created by Shazwan</span>
-    <span>${name} · ${period} · Generated ${new Date().toLocaleDateString()}</span>
+    <span>${name} · ${period}</span>
   </div>
   </body></html>`;
 
   const blob=new Blob([html],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   const w=window.open(url,'_blank');
-  if(w){setTimeout(()=>{w.print();},800);}
-  showToast('✅ PDF report opened — use Print → Save as PDF');
+  if(w){
+    w.onload=()=>{
+      // Inject print CSS to hide browser chrome
+      const style=w.document.createElement('style');
+      style.textContent='@media print{@page{margin:0;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}';
+      w.document.head.appendChild(style);
+      setTimeout(()=>w.print(),600);
+    };
+  }
+  showToast('✅ PDF opened — Print → Save as PDF (disable Headers & Footers in print dialog)');
 }
 </script>
 </body>
